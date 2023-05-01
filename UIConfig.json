@@ -1,1 +1,0 @@
-{"models_dir": "C:\\AMD_ML\\models", "output_path": "C:\\AMD_ML\\Salidas\\ONNX\\output", "forced_VAE_Dir": "", "forced_ControlNet_dir": "", "Txt2img_Tab": false, "InPaint_Tab": true, "Img2Img_Tab": true, "InstructP2P_Tab": 1, "Tools_Tab": true, "Advanced_Config": true, "GradioPort": "8080", "_UI_Configuration__loaded": true}
