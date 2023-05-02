@@ -4,7 +4,7 @@ An approach to make a more modular UI for ONNX Stable Diffusion, to ease future 
 To make it work
 Follow install steps from :https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16/ and use it as your virtual environment for this code.
 
-Clone/Copy this repository on a directory of your preference, activate your python environment, and run "py ONNX-StableDiffusion
+Clone/Copy this repository on a directory of your preference, activate your python environment, and run "py ONNX-StableDiffusion.py"
 
 Current version provides support for: txt2img, img2img, Inpaint, instruct pix2pix.
 
