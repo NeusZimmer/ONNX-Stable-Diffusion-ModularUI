@@ -1,1 +1,0 @@
-{"MAINPipe_provider": "DmlExecutionProvider", "Scheduler_provider": "('DmlExecutionProvider', {'device_id': 1,})", "ControlNet_provider": "('DmlExecutionProvider', {'device_id': 1,})", "VAEDec_provider": "('DmlExecutionProvider', {'device_id': 1,})", "TEXTEnc_provider": "('DmlExecutionProvider', {'device_id': 1,})", "DeepDanBooru_provider": "DmlExecutionProvider"}
