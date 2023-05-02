@@ -16,8 +16,7 @@ Add a clean memory option: changing resolution for the inferences keep garbage i
 
 Also: wildcards, live prompts while running multiple iterations, a working deepdanbooru interrogator and resolution increase option. (one of my first tests with a ONNX model, a MS Model ([super-resolution-10.onnx]) to increase file resolution up to crazy sizes by slicing & joining (working , but not for professional uses)
 
-For DeepDanbooru model, i downloaed it from:https://huggingface.co/chinoll/deepdanbooru/tree/main
-Will try to publish another conversion soon, need to publish it and update that code area.
+For DeepDanbooru model, download it from: https://huggingface.co/Neus/Onnx_DeepDanbooru/tree/main
 
 PD: first python code I did... sure it could be improved, but working fine and easy understand its workflows and to modify in future releases.
 
