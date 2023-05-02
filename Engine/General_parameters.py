@@ -4,16 +4,6 @@
 # https://python-3-patterns-idioms-test.readthedocs.io/en/latest/Singleton.html
 import json
 
-class Borg3:
-    _shared_state = {}
-    def __init__(self):
-        self.__dict__ = self._shared_state
-
-class Borg2:
-    _shared_state = {}
-    def __init__(self):
-        self.__dict__ = self._shared_state
-
 class Borg:
     _shared_state = {}
     def __init__(self):
@@ -64,7 +54,7 @@ class Engine_Configuration(Borg):
             self.load_default_values()
         return self
 
-class UI_Configuration(Borg2):
+class UI_Configuration(Borg):
     __loaded= False
     models_dir=""
     output_path = ""
@@ -81,7 +71,7 @@ class UI_Configuration(Borg2):
     GradioPort = 7860
 
     def __init__(self):
-        Borg2.__init__(self)
+        Borg.__init__(self)
         if not self.__loaded:
             self.load_config()
 
@@ -134,7 +124,7 @@ class UI_Configuration(Borg2):
         self.__loaded=True
 
 
-class running_config(Borg3):
+class running_config(Borg):
     Running_information= dict({"loaded":False})
 
     def __init__(self):

@@ -31,28 +31,6 @@ class Borg:
     _shared_state = {}
     def __init__(self):
         self.__dict__ = self._shared_state
-class Borg2:
-    _shared_state = {}
-    def __init__(self):
-        self.__dict__ = self._shared_state
-class Borg3:
-    _shared_state = {}
-    def __init__(self):
-        self.__dict__ = self._shared_state
-class Borg4:
-    _shared_state = {}
-    def __init__(self):
-        self.__dict__ = self._shared_state
-
-class Borg5:
-    _shared_state = {}
-    def __init__(self):
-        self.__dict__ = self._shared_state
-
-class Borg6:
-    _shared_state = {}
-    def __init__(self):
-        self.__dict__ = self._shared_state
 
 
 class SchedulersConfig(Borg):
@@ -112,12 +90,12 @@ class SchedulersConfig(Borg):
         return scheduler
 
 
-class Vae_and_Text_Encoders(Borg2):
+class Vae_and_Text_Encoders(Borg):
     vae_decoder = None
     vae_encoder = None
     text_encoder = None
     def __init__(self):
-        Borg2.__init__(self)
+        Borg.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -163,13 +141,12 @@ class Vae_and_Text_Encoders(Borg2):
         self.text_encoder = None
         gc.collect()
 
-class inpaint_pipe(Borg4):
+class inpaint_pipe(Borg):
     inpaint_pipe = None
     model = None
-    #running = False
     seeds = []
     def __init__(self):
-        Borg4.__init__(self)
+        Borg.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -263,13 +240,13 @@ class inpaint_pipe(Borg4):
 
 
 
-class txt2img_pipe(Borg3):
+class txt2img_pipe(Borg):
     txt2img_pipe = None
     model = None
     running = False
     seeds = []
     def __init__(self):
-        Borg3.__init__(self)
+        Borg.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -350,13 +327,13 @@ class txt2img_pipe(Borg3):
         gc.collect()
 
 
-class instruct_p2p_pipe(Borg4):
+class instruct_p2p_pipe(Borg):
     instruct_p2p_pipe = None
     model = None
     seed = None
 
     def __init__(self):
-        Borg4.__init__(self)
+        Borg.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -421,12 +398,12 @@ class instruct_p2p_pipe(Borg4):
         gc.collect()
 
 
-class img2img_pipe(Borg6):
+class img2img_pipe(Borg):
     img2img_pipe = None
     model = None
     seeds = []
     def __init__(self):
-        Borg6.__init__(self)
+        Borg.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
