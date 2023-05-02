@@ -84,7 +84,6 @@ def show_txt2img_ui():
 
 
 def change_vae(forced_vae,path_to_vae):
-    from Engine.shared_params import UI_Configuration as UI_Configuration
     ui_config=UI_Configuration()
     ui_config.Forced_VAE =forced_vae
     if ui_config.Forced_VAE:

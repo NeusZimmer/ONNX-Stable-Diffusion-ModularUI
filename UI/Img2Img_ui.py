@@ -21,7 +21,7 @@ def show_Img2Img_ui():
     with gr.Row(): 
         with gr.Column(scale=13, min_width=650):
             model_drop = gr.Dropdown(model_list, value=(model_list[0] if len(model_list) > 0 else None), label="model folder", interactive=True)
-            with gr.Accordion(label="Use Alternative VAE",open=False, visible=False):
+            with gr.Accordion(label="Use Alternative VAE",open=False, visible=True):
                 forced_vae = gr.Checkbox(label="Activate", value=False, interactive=True)
                 path_to_vae = gr.Textbox(value=ui_config.forced_VAE_Dir, lines=1, label="Alternative VAE")
             prompt_t0 = gr.Textbox(value="", lines=2, label="prompt")
@@ -30,18 +30,13 @@ def show_Img2Img_ui():
 
             image_t0 = gr.Image(
                 source="upload", tool="sketch", label="input image", type="pil", elem_id="image2image")
-            mask_t0 = gr.Image(
-                source="upload",
-                label="input mask",
-                type="pil",
-                invert_colors=True,
-                elem_id="mask_inpaint",
-            )
+
             with gr.Row():
                 iter_t0 = gr.Slider(1, 100, value=1, step=1, label="iteration count")
                 batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size",visible=False)
             steps_t0 = gr.Slider(1, 300, value=16, step=1, label="steps")
             guid_t0 = gr.Slider(0, 50, value=7.5, step=0.1, label="guidance")
+            strengh_t0 = gr.Slider(0, 1, value=0.75, step=0.05, label="Strengh")
             height_t0 = gr.Slider(256, 2048, value=512, step=64, label="height")
             width_t0 = gr.Slider(256, 2048, value=512, step=64, label="width")
             eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=False)
@@ -59,22 +54,15 @@ def show_Img2Img_ui():
             with gr.Row():
                 status_out = gr.Textbox(value="", label="status")
 
-  
-    #cancel_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
-    #forced_vae.change(fn=change_vae,inputs=[forced_vae,path_to_vae],outputs=None)
 
-
-
-    global list_of_All_Parameters
-    list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,image_t0,mask_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0]
+    list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,image_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,strengh_t0]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
-    #gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=None)
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
     memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
-
+    cancel_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
+    forced_vae.change(fn=change_vae,inputs=[forced_vae,path_to_vae],outputs=None)
 
 def change_vae(forced_vae,path_to_vae):
-    from Engine.shared_params import UI_Configuration as UI_Configuration
     ui_config=UI_Configuration()
     ui_config.Forced_VAE =forced_vae
     if ui_config.Forced_VAE:
@@ -108,23 +96,13 @@ def get_schedulers_list():
 def select_scheduler(sched_name,model_path):
     return pipelines_engines.SchedulersConfig().scheduler(sched_name,model_path)
 
-def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,image_t0,mask_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0):
+def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,image_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,strengh_t0):
     from Engine.pipelines_engines import img2img_pipe
 
     Running_information= running_config().Running_information
     Running_information.update({"Running":True})
 
     input_image = resize_and_crop(image_t0["image"], height_t0, width_t0)
-
-    if mask_t0 is not None:
-        print("using uploaded mask")
-        input_mask = mask_t0.convert("RGB")
-        input_mask = resize_and_crop(input_mask, height_t0, width_t0)
-    else:
-        print("using painted mask")
-        input_mask = image_t0["mask"].convert("RGB")
-        input_mask = resize_and_crop(input_mask, height_t0, width_t0)
-
 
     if (Running_information["model"] != model_drop or Running_information["tab"] != "img2img"):
         clean_memory_click()
@@ -138,7 +116,6 @@ def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,image_t0,mask_t0,it
     information=[]
     counter=1
     img_index=get_next_save_index()
-    denoise_strength=0.7
 
     for seed in img2img_pipe().seeds:
         if running_config().Running_information["cancelled"]:
@@ -158,30 +135,30 @@ def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,image_t0,mask_t0,it
                 batch_images,info = img2img_pipe().run_inference(
                     prompt_t0,
                     negative_prompt=neg_prompt_t0,
-                    image=loopback_image,  #Atencion esto es lo que cambiar y conseguir un campo Strengh
+                    image=loopback_image,  #Check this data, 
                     num_inference_steps=steps_t0,
                     guidance_scale=guid_t0,
                     eta=eta_t0,
-                    strength=denoise_strength,
+                    strength=strengh_t0,
                     num_images_per_prompt=batch_t0,
-                    seed=seed).images #Cambio gen por su seed.
+                    seed=seed).images 
             elif loopback_image is None:
                 batch_images,info = img2img_pipe().run_inference(
                     prompt_t0,
                     negative_prompt=neg_prompt_t0,
                     image=input_image,
-                    strength=denoise_strength,
+                    strength=strengh_t0,
                     num_inference_steps=steps_t0,
                     guidance_scale=guid_t0,
                     eta=eta_t0,
                     num_images_per_prompt=batch_t0,
-                    seed=seed).images #Cambio gen por su seed.
+                    seed=seed).images 
         elif loopback is False:
             batch_images,info = img2img_pipe().run_inference(
                 prompt_t0,
                 neg_prompt=neg_prompt_t0,
                 init_image=input_image,
-                strength=denoise_strength,
+                strength=strengh_t0,
                 steps=steps_t0,
                 guid=guid_t0,
                 eta=eta_t0,
