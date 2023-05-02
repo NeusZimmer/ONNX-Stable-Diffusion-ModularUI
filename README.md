@@ -14,7 +14,7 @@ Allows the use of a different VAE for a model (many models got the same VAE , th
 
 Add a clean memory option: changing resolution for the inferences keep garbage in memory, and it ends making an impact on the time needed for the inferences.
 
-Also: wildcards, live prompts while running multiple iterations, a working deepdanbooru interrogator and resolution increase option. (one of first tests with a ONNX model, a MS Model ([super-resolution-10.onnx]) to increase file resolution up to crazy sizes by slicing & joining (working , but not for professional uses)
+Also: wildcards, live prompts while running multiple iterations, a working deepdanbooru interrogator and resolution increase option. (one of my first tests with a ONNX model, a MS Model ([super-resolution-10.onnx]) to increase file resolution up to crazy sizes by slicing & joining (working , but not for professional uses)
 
 For DeepDanbooru model, i downloaed it from:https://huggingface.co/chinoll/deepdanbooru/tree/main
 Will try to publish another conversion soon, need to publish it and update that code area.
