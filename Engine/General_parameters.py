@@ -9,6 +9,17 @@ class Borg:
     def __init__(self):
         self.__dict__ = self._shared_state
 
+class Borg1:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+class Borg2:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
 class Engine_Configuration(Borg):
     MAINPipe_provider="Not Selected"
     Scheduler_provider="Not Selected"
@@ -54,7 +65,7 @@ class Engine_Configuration(Borg):
             self.load_default_values()
         return self
 
-class UI_Configuration(Borg):
+class UI_Configuration(Borg1):
     __loaded= False
     models_dir=""
     output_path = ""
@@ -65,13 +76,15 @@ class UI_Configuration(Borg):
     InPaint_Tab = None
     Img2Img_Tab = None
     InstructP2P_Tab = None
+    ControlNet_Tab = None
     Tools_Tab = None
     Advanced_Config = None
     Forced_VAE = False
+    Forced_ControlNet = False
     GradioPort = 7860
 
     def __init__(self):
-        Borg.__init__(self)
+        Borg1.__init__(self)
         if not self.__loaded:
             self.load_config()
 
@@ -82,14 +95,16 @@ class UI_Configuration(Borg):
         self.models_dir=os.getcwd()+"\\models"
         self.output_path=os.getcwd()+"\\output"
         self.forced_VAE_Dir=os.getcwd()
-        self.forced_ControlNet_dir=os.getcwd()
+        self.forced_ControlNet_dir=os.getcwd()+"\\models"
         self.Txt2img_Tab = True
         self.InPaint_Tab = True
         self.Img2Img_Tab = True
         self.Tools_Tab = True
         self.InstructP2P_Tab = True
+        self.ControlNet_Tab = True
         self.Advanced_Config = True
         self.Forced_VAE = False
+        self.Forced_ControlNet = False
         self.GradioPort = 7860
 
     def save_config_json(self):
@@ -111,10 +126,11 @@ class UI_Configuration(Borg):
                 self.InPaint_Tab = jsonStr["InPaint_Tab"]
                 self.Img2Img_Tab = jsonStr["Img2Img_Tab"]
                 self.InstructP2P_Tab = jsonStr["InstructP2P_Tab"]
+                self.ControlNet_Tab = int(jsonStr["ControlNet_Tab"])
                 self.Tools_Tab = jsonStr["Tools_Tab"]
                 self.Advanced_Config = jsonStr["Advanced_Config"]
                 self.GradioPort = int(jsonStr["GradioPort"])
-  
+
         except OSError:
             self.__load_default_values()
         return self
@@ -124,11 +140,11 @@ class UI_Configuration(Borg):
         self.__loaded=True
 
 
-class running_config(Borg):
+class running_config(Borg2):
     Running_information= dict({"loaded":False})
 
     def __init__(self):
-        Borg.__init__(self)
+        Borg2.__init__(self)
         if not self.Running_information["loaded"]==True:
             self.Running_information.update({"loaded":True})
 

@@ -1,7 +1,9 @@
 from sched import scheduler
 from Engine.General_parameters import Engine_Configuration
 from Engine.pipeline_onnx_stable_diffusion_instruct_pix2pix import OnnxStableDiffusionInstructPix2PixPipeline
+from Engine.pipeline_onnx_stable_diffusion_controlnet import OnnxStableDiffusionControlNetPipeline
 import gc
+
 from diffusers import (
     OnnxRuntimeModel,
     OnnxStableDiffusionPipeline,
@@ -32,6 +34,30 @@ class Borg:
     def __init__(self):
         self.__dict__ = self._shared_state
 
+class Borg1:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+class Borg2:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+class Borg3:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+class Borg4:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+class Borg5:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+class Borg6:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
 
 class SchedulersConfig(Borg):
     available_schedulers= None
@@ -44,7 +70,7 @@ class SchedulersConfig(Borg):
     def __str__(self): return json.dumps(self.__dict__)
 
     def load_list(self):
-        self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","KDPM2-A","Karras"]
+        self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","KDPM2-A"]
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","VQD","UnCLIP","Karras","KDPM2-A","IPNDMS"]
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC"]
 
@@ -90,12 +116,12 @@ class SchedulersConfig(Borg):
         return scheduler
 
 
-class Vae_and_Text_Encoders(Borg):
+class Vae_and_Text_Encoders(Borg1):
     vae_decoder = None
     vae_encoder = None
     text_encoder = None
     def __init__(self):
-        Borg.__init__(self)
+        Borg1.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -141,12 +167,12 @@ class Vae_and_Text_Encoders(Borg):
         self.text_encoder = None
         gc.collect()
 
-class inpaint_pipe(Borg):
+class inpaint_pipe(Borg2):
     inpaint_pipe = None
     model = None
     seeds = []
     def __init__(self):
-        Borg.__init__(self)
+        Borg2.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -240,13 +266,13 @@ class inpaint_pipe(Borg):
 
 
 
-class txt2img_pipe(Borg):
+class txt2img_pipe(Borg3):
     txt2img_pipe = None
     model = None
     running = False
     seeds = []
     def __init__(self):
-        Borg.__init__(self)
+        Borg3.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -275,6 +301,11 @@ class txt2img_pipe(Borg):
             )
         else:
              self.txt2img_pipe.scheduler=SchedulersConfig().scheduler(sched_name,model_path)
+
+        import functools
+        from Engine import lpw_pipe
+        self.txt2img_pipe._encode_prompt = functools.partial(lpw_pipe._encode_prompt, self.txt2img_pipe)
+
         return self.txt2img_pipe
 
     def create_seeds(self,seed=None,iter=1,same_seeds=False):
@@ -306,8 +337,9 @@ class txt2img_pipe(Borg):
         rng = np.random.RandomState(seed)
         prompt.strip("\n")
         neg_prompt.strip("\n")
+
         batch_images = self.txt2img_pipe(
-            prompt,
+            prompt=prompt,
             negative_prompt=neg_prompt,
             height=height,
             width=width,
@@ -315,8 +347,10 @@ class txt2img_pipe(Borg):
             guidance_scale=guid,
             eta=eta,
             num_images_per_prompt=batch,
+            prompt_embeds = None,
+            negative_prompt_embeds = None,
             generator=rng).images
-        #return batch_images,{'prompt':prompt,'neg_prompt':neg_prompt,'height':height,'width':width,'steps':steps,'guid':guid,'eta':eta,'batch':batch,'seed':seed}
+
         dictio={'prompt':prompt,'neg_prompt':neg_prompt,'height':height,'width':width,'steps':steps,'guid':guid,'eta':eta,'batch':batch,'seed':seed}
         return batch_images,dictio
 
@@ -327,13 +361,13 @@ class txt2img_pipe(Borg):
         gc.collect()
 
 
-class instruct_p2p_pipe(Borg):
+class instruct_p2p_pipe(Borg4):
     instruct_p2p_pipe = None
     model = None
     seed = None
 
     def __init__(self):
-        Borg.__init__(self)
+        Borg4.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -398,17 +432,17 @@ class instruct_p2p_pipe(Borg):
         gc.collect()
 
 
-class img2img_pipe(Borg):
+class img2img_pipe(Borg5):
     img2img_pipe = None
     model = None
     seeds = []
     def __init__(self):
-        Borg.__init__(self)
+        Borg5.__init__(self)
 
     def __str__(self): return json.dumps(self.__dict__)
 
     def initialize(self,model_path,sched_name):
-        from Engine.General_parameters import Engine_Configuration as en_config
+        #from Engine.General_parameters import Engine_Configuration as en_config
         if Vae_and_Text_Encoders().text_encoder == None:
             Vae_and_Text_Encoders().load_textencoder(model_path)
         if Vae_and_Text_Encoders().vae_decoder == None:
@@ -465,6 +499,113 @@ class img2img_pipe(Borg):
         ).images
         dictio={'prompt':prompt,'neg_prompt':neg_prompt,'steps':steps,'guid':guid,'eta':eta,'strength':strength,'seed':seed}
         return batch_images,dictio
+
+
+class ControlNet_pipe(Borg6):
+#import onnxruntime as ort
+    controlnet_Model_ort= None
+    #controlnet_unet_ort= None
+    ControlNet_pipe = None
+    seeds = []
+
+    def __init__(self):
+        Borg6.__init__(self)
+
+    def __str__(self): return json.dumps(self.__dict__)
+
+    def __load_ControlNet_model(self,model_path):
+        print("Cargando Controlnet")
+        if " " in Engine_Configuration().ControlNet_provider:
+            provider =eval(Engine_Configuration().ControlNet_provider)
+        else:
+            provider =Engine_Configuration().ControlNet_provider
+
+        from Engine.General_parameters import UI_Configuration as UI_Configuration
+        ui_config=UI_Configuration()
+        if ui_config.Forced_ControlNet:
+            ControlNet_path=ui_config.forced_ControlNet_dir
+            print("Using Forced ControlNET model:"+ControlNet_path)
+        else:
+            ControlNet_path=model_path + "/controlnet"  ##ATTENCION, mirar que directorio por cada modelo onnx, este es de openpose
+
+        #con onnxruntime cargar el modelo controlnet
+        controlnet_model = OnnxRuntimeModel.from_pretrained(ControlNet_path, provider=provider)
+        return controlnet_model
+
+    def __load_uNet_model(self,model_path):
+        #Aqui cargar con ort el modelo unicamente en el provider principal.
+        print("Cargando Unet")
+        if " " in Engine_Configuration().MAINPipe_provider:
+            provider =eval(Engine_Configuration().MAINPipe_provider)
+        else:
+            provider =Engine_Configuration().MAINPipe_provider
+
+        unet_model = OnnxRuntimeModel.from_pretrained(model_path + "/unet", provider=provider)
+        return unet_model
+
+    def initialize(self,model_path,sched_name):
+        #from Engine.General_parameters import Engine_Configuration as en_config
+        if Vae_and_Text_Encoders().text_encoder == None:
+            Vae_and_Text_Encoders().load_textencoder(model_path)
+        if Vae_and_Text_Encoders().vae_decoder == None:
+            Vae_and_Text_Encoders().load_vaedecoder(model_path)
+        if Vae_and_Text_Encoders().vae_encoder == None:
+            Vae_and_Text_Encoders().load_vaeencoder(model_path)
+
+        import onnxruntime as ort
+        opts = ort.SessionOptions()
+        opts.enable_cpu_mem_arena = False
+        opts.enable_mem_pattern = False
+    
+        if self.ControlNet_pipe == None:
+            print("LLamando a las cargas")
+            self.controlnet_Model_ort= self.__load_ControlNet_model(model_path)
+            #self.controlnet_unet_ort= self.__load_uNet_model(model_path)
+            print("Creando pipe")
+            self.ControlNet_pipe = OnnxStableDiffusionControlNetPipeline.from_pretrained(
+                #unet=self.controlnet_unet_ort,
+                model_path,
+                controlnet=self.controlnet_Model_ort,
+                vae_encoder=Vae_and_Text_Encoders().vae_encoder,
+                vae_decoder=Vae_and_Text_Encoders().vae_decoder,
+                text_encoder=Vae_and_Text_Encoders().text_encoder,
+                scheduler=SchedulersConfig().scheduler(sched_name,model_path),
+                #sess_options=opts, 
+                provider = Engine_Configuration().MAINPipe_provider,
+                requires_safety_checker= False
+            )
+        return self.ControlNet_pipe
+
+    def run_inference(self,prompt,neg_prompt,pose_image,width,height,eta,steps,guid,seed):
+        import numpy as np
+        print(seed)
+        rng = np.random.RandomState(int(seed))
+        image = self.ControlNet_pipe(
+            prompt,
+            pose_image,
+            negative_prompt=neg_prompt,
+            width = width,
+            height = height,
+            num_inference_steps = steps,
+            guidance_scale=guid,
+            eta=eta,
+            num_images_per_prompt=1,
+            generator=rng,
+        ).images[0]
+        #Añadir el diccionario
+        return image
+
+    def create_seeds(self,seed=None,iter=1,same_seeds=False):
+        self.seeds=seed_generator(seed,iter)
+        if same_seeds:
+            for seed in seeds:
+                seed = seeds[0]
+
+    def unload_from_memory(self):
+        self.ControlNet_pipe= None
+        controlnet_Model_ort= None
+        #controlnet_unet_ort= None
+        gc.collect()
 
 
 def seed_generator(seed,iteration_count):
