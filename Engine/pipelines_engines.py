@@ -4,6 +4,7 @@ from Engine.pipeline_onnx_stable_diffusion_instruct_pix2pix import OnnxStableDif
 from Engine.pipeline_onnx_stable_diffusion_controlnet import OnnxStableDiffusionControlNetPipeline
 import gc
 
+from diffusers.utils import randn_tensor
 from diffusers import (
     OnnxRuntimeModel,
     OnnxStableDiffusionPipeline,
@@ -62,21 +63,29 @@ class Borg6:
 class SchedulersConfig(Borg):
     available_schedulers= None
     selected_scheduler= None
+    _model_path = None
+    _scheduler_name = None
+
     def __init__(self):
         Borg.__init__(self)
         if self.available_schedulers == None:
-            self.load_list()
+            self._load_list()
 
     def __str__(self): return json.dumps(self.__dict__)
 
-    def load_list(self):
+    def _load_list(self):
         self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","KDPM2-A"]
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","VQD","UnCLIP","Karras","KDPM2-A","IPNDMS"]
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC"]
 
+    def reset_scheduler(self):
+        return self.scheduler(self._scheduler_name,self._model_path)
 
     def scheduler(self,scheduler_name,model_path):
         scheduler = None
+        self.selected_scheduler = None
+        self._model_path = model_path
+        self._scheduler_name = scheduler_name
         provider = Engine_Configuration().Scheduler_provider
         match scheduler_name:
             case "PNDM":
@@ -112,8 +121,8 @@ class SchedulersConfig(Borg):
                 scheduler = KDPM2AncestralDiscreteScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
             case "IPNDMS":
                 scheduler = IPNDMScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
-
-        return scheduler
+        self.selected_scheduler =scheduler
+        return self.selected_scheduler
 
 
 class Vae_and_Text_Encoders(Borg1):
@@ -126,19 +135,22 @@ class Vae_and_Text_Encoders(Borg1):
     def __str__(self): return json.dumps(self.__dict__)
 
     def load_vaedecoder(self,model_path):
+        from Engine.General_parameters import UI_Configuration as UI_Configuration
+
         if " " in Engine_Configuration().VAEDec_provider:
             provider =eval(Engine_Configuration().VAEDec_provider)
         else:
             provider =Engine_Configuration().VAEDec_provider
 
-        from Engine.General_parameters import UI_Configuration as UI_Configuration
         ui_config=UI_Configuration()
         if ui_config.Forced_VAE:
             vae_path=ui_config.forced_VAE_Dir
-            print("Using Force VAE:"+vae_path)
+            print("Using Forced VAE:"+vae_path)
         else:
             vae_path=model_path + "/vae_decoder"
 
+        self.vae_decoder = None
+        print(f"Loading VAE decoder in:{provider}" )
         self.vae_decoder = OnnxRuntimeModel.from_pretrained(vae_path, provider=provider)
         return self.vae_decoder
 
@@ -147,10 +159,12 @@ class Vae_and_Text_Encoders(Borg1):
             provider =eval(Engine_Configuration().VAEDec_provider)
         else:
             provider =Engine_Configuration().VAEDec_provider
+
         vae_path=model_path + "/vae_encoder"
+        self.vae_decoder = None
+        print(f"Loading VAE encoder in:{provider}" )
         self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider=provider)
         return self.vae_encoder
-
 
     def load_textencoder(self,model_path):
         #Mirar si utilizar uno diferente (depende del tamaño en disco)
@@ -158,6 +172,9 @@ class Vae_and_Text_Encoders(Borg1):
             provider = eval(Engine_Configuration().TEXTEnc_provider)
         else:
             provider = Engine_Configuration().TEXTEnc_provider
+
+        print(f"Loading TEXT encoder in:{provider}" )
+        self.text_encoder = None
         self.text_encoder = OnnxRuntimeModel.from_pretrained(model_path + "/text_encoder", provider=provider)
         return self.text_encoder
 
@@ -271,8 +288,11 @@ class txt2img_pipe(Borg3):
     model = None
     running = False
     seeds = []
+    latents_list = []
+
     def __init__(self):
         Borg3.__init__(self)
+        self.latents_list = []
 
     def __str__(self): return json.dumps(self.__dict__)
 
@@ -280,9 +300,7 @@ class txt2img_pipe(Borg3):
         from Engine.General_parameters import Engine_Configuration as en_config
         if Vae_and_Text_Encoders().text_encoder == None:
             Vae_and_Text_Encoders().load_textencoder(model_path)
-            #Vae_and_Text_Encoders().load_textencoder(textenc_model_path)
         if Vae_and_Text_Encoders().vae_decoder == None:
-            #Vae_and_Text_Encoders().load_vaedecoder(vae_model_path)
             Vae_and_Text_Encoders().load_vaedecoder(model_path)
 
         if " " in Engine_Configuration().MAINPipe_provider:
@@ -305,6 +323,9 @@ class txt2img_pipe(Borg3):
         import functools
         from Engine import lpw_pipe
         self.txt2img_pipe._encode_prompt = functools.partial(lpw_pipe._encode_prompt, self.txt2img_pipe)
+        from Engine import txt2img_pipe_sub
+        self.txt2img_pipe.__call__ = functools.partial(txt2img_pipe_sub.__call__, self.txt2img_pipe)
+        OnnxStableDiffusionPipeline.__call__ =  txt2img_pipe_sub.__call__
 
         return self.txt2img_pipe
 
@@ -331,12 +352,56 @@ class txt2img_pipe(Borg3):
             latents=image_np).images
         return batch_images, "vacio"
 
-    def run_inference(self,prompt,neg_prompt,height,width,steps,guid,eta,batch,seed):
-        #rng = np.random.RandomState(seeds[i])
+    def get_initial_latent(self, steps,multiplier,generator,strengh):
+        from Engine.General_parameters import running_config
+        import numpy as np
+        if True:
+        #try:
+            name=running_config().Running_information["Latent_Name"]
+            loaded_latent=np.load(f"./latents/{name}")
+            print("Latent loaded")
+            self.txt2img_pipe.scheduler = SchedulersConfig().reset_scheduler()
+            if multiplier < 1:
+            #if False:
+                print("Multiplier applied (Use 1 as value, to do not apply)")
+                loaded_latent= multiplier * loaded_latent
+                #loaded_latent= 1/multiplier * loaded_latent
+        #except:
+        else:
+            print("Latent not found")
+            return None
+
+        offset = self.txt2img_pipe.scheduler.config.get("steps_offset", 0)
+        #init_timestep = int(steps * strength) + offset
+        #init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar
+        #init_timestep = min(init_timestep, steps)
+        init_timestep = strengh
+
+        timesteps = self.txt2img_pipe.scheduler.timesteps.numpy()[-init_timestep]
+        #timesteps = np.array([timesteps] * batch_size * num_images_per_prompt)
+
+        #noise = generator.randn(*loaded_latent.shape).astype(loaded_latent.dtype)
+        noise = np.random.random(loaded_latent.shape).astype(loaded_latent.dtype) #works a lot better for other schedulers than EulerA , why?
+        import torch
+        init_latents = self.txt2img_pipe.scheduler.add_noise(
+            torch.from_numpy(loaded_latent), torch.from_numpy(noise), torch.from_numpy(np.array([timesteps]))
+        )
+        init_latents = init_latents.numpy()
+
+        return init_latents
+        #return loaded_latent
+
+
+    def run_inference(self,prompt,neg_prompt,height,width,steps,guid,eta,batch,seed,multiplier,strengh):
         import numpy as np
         rng = np.random.RandomState(seed)
         prompt.strip("\n")
         neg_prompt.strip("\n")
+        loaded_latent= None
+        from Engine.General_parameters import running_config
+
+        if running_config().Running_information["Load_Latents"]:
+            loaded_latent=self.get_initial_latent(steps,multiplier,rng,strengh)
 
         batch_images = self.txt2img_pipe(
             prompt=prompt,
@@ -349,16 +414,41 @@ class txt2img_pipe(Borg3):
             num_images_per_prompt=batch,
             prompt_embeds = None,
             negative_prompt_embeds = None,
+            latents=loaded_latent,
+            callback= self.__callback,
+            callback_steps =2,
             generator=rng).images
 
         dictio={'prompt':prompt,'neg_prompt':neg_prompt,'height':height,'width':width,'steps':steps,'guid':guid,'eta':eta,'batch':batch,'seed':seed}
+        from Engine.General_parameters import running_config
+        if running_config().Running_information["Save_Latents"]:
+            self.savelatents_todisk(seed=seed)
+            print("Latents Saved")
         return batch_images,dictio
+
+
+    def savelatents_todisk(self,id=0,path="./latents",seed=0):
+        contador=0
+        import numpy as np
+        print("Saving all latent_steps to disk")
+        for latents in self.latents_list:
+            np.save(f"{path}/Seed-{seed}_latent_Step-{contador}.npy", latents)
+            contador+=1
+
+    def __callback(self,i, t, latents):
+        from Engine.General_parameters import running_config
+        cancel = running_config().Running_information["cancelled"]
+        if running_config().Running_information["Save_Latents"]:
+            self.latents_list.append(latents)
+        return  cancel
 
     def unload_from_memory(self):
         self.txt2img_pipe= None
         self.model = None
         self.running = False
+        self.latents_list = None
         gc.collect()
+
 
 
 class instruct_p2p_pipe(Borg4):
@@ -485,6 +575,7 @@ class img2img_pipe(Borg5):
         rng = np.random.RandomState(seed)
         prompt.strip("\n")
         neg_prompt.strip("\n")
+
 
         batch_images = self.img2img_pipe(
             prompt,

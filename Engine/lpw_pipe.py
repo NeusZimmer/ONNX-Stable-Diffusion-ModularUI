@@ -211,9 +211,11 @@ def get_unweighted_text_embeddings(
                     text_embedding = text_embedding[:, 1:-1]
 
             text_embeddings.append(text_embedding)
+
         text_embeddings = np.concatenate(text_embeddings, axis=1)
     else:
         text_embeddings = pipe.text_encoder(input_ids=text_input)[0]
+
     return text_embeddings
 
 
@@ -254,9 +256,6 @@ def get_weighted_text_embeddings(
     """
 
     max_length = (pipe.tokenizer.model_max_length - 2) * max_embeddings_multiples + 2
-    print("long")
-    print(max_length)
-    print(max_embeddings_multiples)
 
     if isinstance(prompt, str):
         prompt = [prompt]
@@ -302,6 +301,7 @@ def get_weighted_text_embeddings(
     # pad the length of tokens and weights
     bos = pipe.tokenizer.bos_token_id
     eos = pipe.tokenizer.eos_token_id
+
     prompt_tokens, prompt_weights = pad_tokens_and_weights(
         prompt_tokens,
         prompt_weights,
@@ -406,9 +406,11 @@ def _encode_prompt(
         max_embeddings_multiples=max_embeddings_multiples,
     )
 
+
     text_embeddings = text_embeddings.repeat(num_images_per_prompt, 0)
     if do_classifier_free_guidance:
         uncond_embeddings = uncond_embeddings.repeat(num_images_per_prompt, 0)
         text_embeddings = np.concatenate([uncond_embeddings, text_embeddings])
+
 
     return text_embeddings
