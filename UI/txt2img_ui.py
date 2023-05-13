@@ -23,9 +23,18 @@ def show_txt2img_ui():
             with gr.Accordion(label="Use Alternative VAE",open=False):
                 forced_vae = gr.Checkbox(label="Activate", value=False, interactive=True)
                 path_to_vae = gr.Textbox(value=ui_config.forced_VAE_Dir, lines=1, label="Alternative VAE")
+            with gr.Accordion(label="Latents experimentals",open=False):
+                multiplier = gr.Slider(0, 1, value=0.5, step=0.05, label="Multiplier, blurry the ingested latent, 1 to do not modify", interactive=True)
+                #strengh_t0 = gr.Slider(0, 1, value=0.8, step=0.05, label="Strengh, or % of steps to apply the latent", interactive=True)
+                strengh_t0 = gr.Slider(0, 100, value=10, step=1, label="Strengh, or steps to apply the latent", interactive=True)
+                latents_experimental1 = gr.Checkbox(label="Save generated latents ", value=False, interactive=True)
+                latents_experimental2 = gr.Checkbox(label="Load latent from a generation", value=False, interactive=True)
+                name_of_latent = gr.Textbox(value="", lines=1, label="Name of Numpy- Latent")
+                latent_to_img_btn = gr.Button("Convert all latents to imgs", variant="primary", elem_id="gen_button")
             prompt_t0 = gr.Textbox(value="", lines=2, label="prompt")
             neg_prompt_t0 = gr.Textbox(value="", lines=2, label="negative prompt")
             sch_t0 = gr.Radio(sched_list, value=sched_list[0], label="scheduler")
+
             with gr.Row():
                 iter_t0 = gr.Slider(1, 100, value=1, step=1, label="iteration count")
                 batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size")
@@ -51,6 +60,7 @@ def show_txt2img_ui():
                         wildcard_show_btn = gr.Button("Show next prompt", elem_id="wildcard_button")
                         wildcard_gen_btn = gr.Button("Regenerate next prompt", variant="primary", elem_id="wildcard_button")
                         wildcard_apply_btn = gr.Button("Use edited prompt", elem_id="wildcard_button")
+                        test_btn = gr.Button("TESTS", elem_id="mem_button")
             with gr.Row():
                 image_out = gr.Gallery(value=None, label="output images")
 
@@ -71,17 +81,87 @@ def show_txt2img_ui():
     clear_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
     forced_vae.change(fn=change_vae,inputs=[forced_vae,path_to_vae],outputs=None)
 
-    list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0]
+    list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh_t0,name_of_latent]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
     memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
     #test_btn.click(fn=test1,inputs=[model_drop,prompt_t0,neg_prompt_t0,sch_t0],outputs=image_out)
+    test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
+    latents_experimental1.change(fn=_activate_latent_save, inputs=latents_experimental1, outputs= None)
+    latents_experimental2.change(fn=_activate_latent_load, inputs=[latents_experimental2,name_of_latent], outputs= None)
+    latent_to_img_btn.click(fn=_latent_to_img,inputs=None,outputs=None)
 
     if ui_config.wildcards_activated:
         wildcard_gen_btn.click(fn=gen_next_prompt, inputs=prompt_t0, outputs=[discard,next_wildcard])
         wildcard_show_btn.click(fn=show_next_prompt, inputs=None, outputs=next_wildcard)
         wildcard_apply_btn.click(fn=apply_prompt, inputs=next_wildcard, outputs=None)
 
+def numpy_to_pil(images):
+    """
+    Convert a numpy image or a batch of images to a PIL image.
+    """
+    from PIL import Image
+    if images.ndim == 3:
+        images = images[None, ...]
+    images = (images * 255).round().astype("uint8")
+    if images.shape[-1] == 1:
+        # special case for grayscale (single channel) images
+        pil_images = [Image.fromarray(image.squeeze(), mode="L") for image in images]
+    else:
+        pil_images = [Image.fromarray(image) for image in images]
+    return pil_images
+
+def _latent_to_img():
+    import numpy as np
+    latent_path="./latents"
+    latent_list = []
+    try:
+        with os.scandir(latent_path) as scan_it:
+            for entry in scan_it:
+                if ".npy" in entry.name:
+                    latent_list.append(entry.name)
+    except:
+        model_list.append("Not numpys found")
+    print(latent_list)
+    vaedec=vae_decoder=pipelines_engines.Vae_and_Text_Encoders().vae_decoder
+    for latent in latent_list:
+        loaded_latent=np.load(f"./latents/{latent}")
+        loaded_latent = 1 / 0.18215 * loaded_latent
+        image = np.concatenate([vaedec(latent_sample=loaded_latent[i : i + 1])[0] for i in range(loaded_latent.shape[0])])
+        #image=vaedec(latent_sample=loaded_latent)[0]
+        name= latent[:-3]
+        name= name+"png"
+        image = np.clip(image / 2 + 0.5, 0, 1)
+        image = image.transpose((0, 2, 3, 1))
+
+        image = numpy_to_pil(image)[0]
+        print(image)
+        image.save(f"./latents/{name}",optimize=True)
+    return
+
+def _activate_latent_save(activate_latent_save):
+    from Engine.General_parameters import running_config
+    running_config().Running_information.update({"Save_Latents":activate_latent_save})
+    print(running_config().Running_information["Save_Latents"])
+
+def _activate_latent_load(activate_latent_load,name_of_latent):
+    from Engine.General_parameters import running_config
+    running_config().Running_information.update({"Load_Latents":activate_latent_load})
+    #running_config().Running_information.update({"Latent_Name":name_of_latent})
+    #name=running_config().Running_information["Latent_Name"]
+    #print(f"./latents/{name}")
+
+def pruebas(prompt,negative_prompt):
+    from Engine import textual_inversion
+    embedding=textual_inversion.text_inversion().load_embedding("ti_path")
+    print("El tercero emb"+str(type(embedding)))
+    print("El tercero emb"+str(embedding))
+    import functools
+    from Engine import lpw_pipe
+    #self.txt2img_pipe._encode_prompt = functools.partial(lpw_pipe._encode_prompt, self.txt2img_pipe)
+    result= lpw_pipe()._encode_prompt(prompt=prompt,num_images_per_prompt=1,do_classifier_free_guidance=False,negative_prompt=negative_prompt)
+    print(type(result))
+    print(result)
 
 def change_vae(forced_vae,path_to_vae):
     ui_config=UI_Configuration()
@@ -157,12 +237,15 @@ def show_next_prompt():
     global next_prompt
     return next_prompt
 
-def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0):
+def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh,name_of_latent):
     from Engine.pipelines_engines import txt2img_pipe
 
     Running_information= running_config().Running_information
     Running_information.update({"Running":True})
+    Running_information.update({"Latent_Name":name_of_latent})
 
+    if Running_information["Load_Latents"]:
+        Running_information.update({"Latent_Name":name_of_latent})
 
     if (Running_information["model"] != model_drop or Running_information["tab"] != "txt2img"):
         clean_memory_click()
@@ -179,13 +262,11 @@ def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,st
     img_index=get_next_save_index()
     for seed in txt2img_pipe().seeds:
         if running_config().Running_information["cancelled"]:
-            running_config().Running_information.update({"cancelled":False})
             break
         prompt,discard=gen_next_prompt(prompt_t0)
-        running_config().parse_prompt_attention(prompt)
+        #running_config().parse_prompt_attention(prompt) 
         print(f"Iteration:{counter}/{iter_t0}")
         counter+=1
-        #print("resultado de promptattention")
         batch_images,info = txt2img_pipe().run_inference(
             prompt,
             neg_prompt_t0,
@@ -195,19 +276,22 @@ def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,st
             guid_t0,
             eta_t0,
             batch_t0,
-            seed)
+            seed,multiplier,strengh)
         images.extend(batch_images)
         info=dict(info)
         info['Sched:']=sch_t0
+        info['Multiplier:']=multiplier
         information.append(info)
         save_image(batch_images,info,img_index)
         img_index+=1
 
+    running_config().Running_information.update({"cancelled":False})
     global processed_images
     processed_images=images
     gen_next_prompt("",True)
     Running_information.update({"Running":False})
     return images,information
+    #return separadas,information
 
 
 def get_next_save_index():
