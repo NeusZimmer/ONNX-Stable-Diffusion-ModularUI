@@ -6,7 +6,7 @@ Follow install steps from :https://github.com/Amblyopius/Stable-Diffusion-ONNX-F
 
 Clone/Copy this repository on a directory of your preference, activate your python environment, and run "py ONNX-StableDiffusion.py"
 
-Current version provides support for: txt2img, img2img, Inpaint, instruct pix2pix.
+Current version provides support for: txt2img, img2img, Inpaint, instruct pix2pix.(control net in test phase), and NEW: reingest of a previous generation into a new one
 
 Allows modification of the pipeline providers without re-running the UI., also, you may want to run some pipeline in one graphic card, another card for VAE and CPU to the rest... this UI allows such granularity for :main model, schedulers, VAE, text encoder...
 
