@@ -41,6 +41,6 @@ PD: Make sure the size (width and height) of the previous image is according to 
 Here is the tricky part, Select Euler A, a multiplier ( best results range between 0.4 to 0.6 ) and a Strengh, strengh is the total steps you will be applying the numpy file, if you go fot 36 steps a good number could range from 28 to 32 (from 70% to 90%).
 Steps: you could have a good approach of the final image from 14-16 steps, and good results around 30 to 40 steps.
 ![re-generate](https://github.com/NeusZimmer/ONNX-ModularUI/assets/94193584/03afe051-ec35-438a-abcd-2e401f1bd4e6)
-Guid: depends on the model, i found the you will need to increase it a little bit, 10 to 18 could be a good starting point (12-14 the usual)
+Guid: depends on the model, i found the need to increase it a little bit, 10 to 18 could be a good starting point (12-14 the usual)
 
 
