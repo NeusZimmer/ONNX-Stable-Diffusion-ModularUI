@@ -28,7 +28,12 @@ def init_ui():
             with gr.Tab(label="Instruct Pix2Pix") as tab4:
                 from UI import instructp2p_ui
                 instructp2p_ui.show_instructp2p_ui()
-        with gr.Tab(label="Configuration") as tab5:
+        if False:
+        #if ui_config.ControlNet_Tab:
+            with gr.Tab(label="ControlNet") as tab5:
+                from UI import ControlNet_ui
+                ControlNet_ui.show_ControlNet_ui()
+        with gr.Tab(label="Configuration") as tab6:
             from UI import config_ui_general
             config_ui_general.show_general_configuration()
             if ui_config.Advanced_Config:
@@ -41,15 +46,8 @@ def init_ui():
             #restart_btn.click(fn=restart, inputs=None, outputs=None)
     return demo
 
-def restart():
-    import gc
-    global demo
-    demo.close()
-    gr.close_all()
-    demo = init_ui()
-    print("Restart?")
-    gc.collect()
-    demo.launch(server_port=UI_Configuration().GradioPort)
+#def restart():
+    #Not implemented
 
 
 
@@ -59,6 +57,9 @@ Running_information.update({"cancelled":False})
 Running_information.update({"model":""})
 Running_information.update({"tab":""})
 Running_information.update({"Running":False})
+Running_information.update({"Save_Latents":False})
+Running_information.update({"Load_Latents":False})
+Running_information.update({"Latent_Name":""})
 
 Engine_Configuration().load_config_json()
 demo =init_ui()
