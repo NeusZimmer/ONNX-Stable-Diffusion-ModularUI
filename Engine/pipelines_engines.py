@@ -161,7 +161,7 @@ class Vae_and_Text_Encoders(Borg1):
             provider =Engine_Configuration().VAEDec_provider
 
         vae_path=model_path + "/vae_encoder"
-        self.vae_decoder = None
+        self.vae_encoder = None
         print(f"Loading VAE encoder in:{provider}" )
         self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider=provider)
         return self.vae_encoder
@@ -372,16 +372,14 @@ class txt2img_pipe(Borg3):
             return None
 
         offset = self.txt2img_pipe.scheduler.config.get("steps_offset", 0)
-        #init_timestep = int(steps * strength) + offset
-        #init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar
-        #init_timestep = min(init_timestep, steps)
         init_timestep = strengh
 
         timesteps = self.txt2img_pipe.scheduler.timesteps.numpy()[-init_timestep]
         #timesteps = np.array([timesteps] * batch_size * num_images_per_prompt)
 
         #noise = generator.randn(*loaded_latent.shape).astype(loaded_latent.dtype)
-        noise = np.random.random(loaded_latent.shape).astype(loaded_latent.dtype) #works a lot better for other schedulers than EulerA , why?
+        #noise = np.random.random(loaded_latent.shape).astype(loaded_latent.dtype) 
+        noise = (0.1825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype)#works a lot better for EulerA than other schedulers  , why?
         import torch
         init_latents = self.txt2img_pipe.scheduler.add_noise(
             torch.from_numpy(loaded_latent), torch.from_numpy(noise), torch.from_numpy(np.array([timesteps]))
@@ -422,18 +420,19 @@ class txt2img_pipe(Borg3):
         dictio={'prompt':prompt,'neg_prompt':neg_prompt,'height':height,'width':width,'steps':steps,'guid':guid,'eta':eta,'batch':batch,'seed':seed}
         from Engine.General_parameters import running_config
         if running_config().Running_information["Save_Latents"]:
-            self.savelatents_todisk(seed=seed)
+            print("Saving all latent_steps to disk")
+            self.savelatents_todisk(seed=seed,contador=len(self.latents_list))
             print("Latents Saved")
         return batch_images,dictio
 
-
-    def savelatents_todisk(self,id=0,path="./latents",seed=0):
-        contador=0
+    def savelatents_todisk(self,path="./latents",seed=0,save_steps=False,contador=1000,callback_steps=2):
         import numpy as np
-        print("Saving all latent_steps to disk")
-        for latents in self.latents_list:
-            np.save(f"{path}/Seed-{seed}_latent_Step-{contador}.npy", latents)
-            contador+=1
+        if self.latents_list:
+            latent_to_save= self.latents_list.pop()
+            if save_steps:
+                self.savelatents_todisk(path=path,seed=seed,save_steps=save_steps,contador=contador-1,callback_steps=callback_steps)
+            np.save(f"{path}/Seed-{seed}_latent_Step-{contador*callback_steps}.npy", latent_to_save)
+        return
 
     def __callback(self,i, t, latents):
         from Engine.General_parameters import running_config
