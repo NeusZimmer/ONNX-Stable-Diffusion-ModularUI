@@ -22,7 +22,7 @@ PD: first python code I did... sure it could be improved, but working fine and e
 
 1st-Mayor updated, i was looking for an option to re-use previous generated images, and i did one approach, basing on their generated latents, available under txt2img tab, accordion: Latent Experimentals.
 
-Works fairly well, but only with Euler Ancestral, while other schedulers are hard to find the right conbination (or impossible), with Euler A you may get pretty good definition and images based on a previous generation, from same model or from a different model.
+Works fairly well, but only with DDIMM (ETA=1) and Euler Ancestral, while other schedulers are hard to find the right conbination (or impossible), with DDIM & Euler A you may get pretty good definition and images based on a previous generation, from same model or from a different model.
 
 1st. find a prompt, model and a generation that you want to save and use
 ![SaveLatents1](https://github.com/NeusZimmer/ONNX-ModularUI/assets/94193584/5778f303-d9ef-4dcb-8cd6-74a7c8998359)
