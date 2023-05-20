@@ -42,7 +42,7 @@ def show_txt2img_ui():
             guid_t0 = gr.Slider(0, 50, value=7.5, step=0.1, label="guidance")
             height_t0 = gr.Slider(256, 2048, value=512, step=64, label="height")
             width_t0 = gr.Slider(256, 2048, value=512, step=64, label="width")
-            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=False)
+            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=True)
             seed_t0 = gr.Textbox(value="", max_lines=1, label="seed")
             fmt_t0 = gr.Radio(["png", "jpg"], value="png", label="image format")
         with gr.Column(scale=11, min_width=550):
