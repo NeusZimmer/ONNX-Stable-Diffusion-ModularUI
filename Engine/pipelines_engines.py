@@ -382,7 +382,7 @@ class txt2img_pipe(Borg3):
         noise = (0.1825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype)#works a lot better for EulerA than other schedulers  , why?
         import torch
         init_latents = self.txt2img_pipe.scheduler.add_noise(
-            torch.from_numpy(loaded_latent), torch.from_numpy(noise), torch.from_numpy(np.array([timesteps]))
+            torch.from_numpy(loaded_latent), (torch.from_numpy(noise)).type(torch.LongTensor), (torch.from_numpy(np.array([timesteps])).type(torch.LongTensor))
         )
         init_latents = init_latents.numpy()
 
