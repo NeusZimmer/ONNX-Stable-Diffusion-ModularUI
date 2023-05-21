@@ -35,21 +35,16 @@ def init_ui():
                 ControlNet_ui.show_ControlNet_ui()
         with gr.Tab(label="Configuration") as tab6:
             from UI import config_ui_general
+            from UI import config_ui_ControlNet            
             config_ui_general.show_general_configuration()
             if ui_config.Advanced_Config:
                     from UI import config_ui_engine as config_ui_engine
                     config_ui_engine.show_providers_configuration()
                     #from UI import config_ui_wildcards as wilcards_ui_config
                     #wilcards_ui_config.show_wilcards_configuration()
-        #with gr.Box():
-            #restart_btn = gr.Button("Restart UI", variant="primary")
-            #restart_btn.click(fn=restart, inputs=None, outputs=None)
+            config_ui_ControlNet.show_controlnet_models_configuration()
+
     return demo
-
-#def restart():
-    #Not implemented
-
-
 
 
 Running_information= running_config().Running_information
@@ -60,6 +55,8 @@ Running_information.update({"Running":False})
 Running_information.update({"Save_Latents":False})
 Running_information.update({"Load_Latents":False})
 Running_information.update({"Latent_Name":""})
+Running_information.update({"Latent_Formula":""})
+Running_information.update({"Callback_Steps":2})
 
 Engine_Configuration().load_config_json()
 demo =init_ui()
