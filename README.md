@@ -6,7 +6,7 @@ Follow install steps from :https://github.com/Amblyopius/Stable-Diffusion-ONNX-F
 
 Clone/Copy this repository on a directory of your preference, activate your python environment, and run "py ONNX-StableDiffusion.py"
 
-Current version provides support for: txt2img, img2img, Inpaint, instruct pix2pix.(control net in test phase), and NEW: reingest of a previous generation into a new one
+Current version provides support for: txt2img, img2img, Inpaint, instruct pix2pix.(control net in test phase), and NEW: reingest of a previous generation into a new one, it works closely to ControlNet
 
 Allows modification of the pipeline providers without re-running the UI., also, you may want to run some pipeline in one graphic card, another card for VAE and CPU to the rest... this UI allows such granularity for :main model, schedulers, VAE, text encoder...
 
@@ -20,7 +20,7 @@ For DeepDanbooru model, download it from: https://huggingface.co/Neus/Onnx_DeepD
 
 PD: first python code I did... sure it could be improved, but working fine and easy understand its workflows and to modify in future releases.
 
-1st-Mayor updated, i was looking for an option to re-use previous generated images, and i did one approach, basing on their generated latents, available under txt2img tab, accordion: Latent Experimentals.
+1st-Mayor updated, i was looking for an option to re-use previous generated latents of images, and i did one approach, basing on their generated latents, available under txt2img tab, accordion: Latent Experimentals. For one or sumatories of latens... look and the info txt file to make it work.
 
 Works fairly well, but only with DDIMM (ETA=1) and Euler Ancestral, while other schedulers are hard to find the right conbination (or impossible), with DDIM & Euler A you may get pretty good definition and images based on a previous generation, from same model or from a different model.
 
@@ -36,6 +36,7 @@ If you want to check the result image of each .npy file, you may click on "Conve
 
 
 Write down the name of the numpy to use for the next generated image and a different promt, (having in mind the constrains of the previously generated image)
+For only one latent use: "index:name.npy" formula: index (ie: "1:file.npy"  formula:"1")
 PD: Make sure the size (width and height) of the previous image is according to the new generation
 
 Here is the tricky part, Select Euler A, a multiplier ( best results range between 0.4 to 0.6 ) and a Strengh, strengh is the total steps you will be applying the numpy file, if you go fot 36 steps a good number could range from 28 to 32 (from 70% to 90%).
