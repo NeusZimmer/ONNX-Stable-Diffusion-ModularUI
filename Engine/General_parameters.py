@@ -19,6 +19,11 @@ class Borg2:
     def __init__(self):
         self.__dict__ = self._shared_state
 
+class Borg3:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
 
 class Engine_Configuration(Borg):
     MAINPipe_provider="Not Selected"
@@ -149,4 +154,62 @@ class running_config(Borg2):
             self.Running_information.update({"loaded":True})
 
     def __str__(self): return json.dumps(self.__dict__)
+
+
+class ControlNet_config(Borg3):
+    config = None
+    def __init__(self):
+        Borg3.__init__(self)
+        if  self.config == None:
+            self.config = self.__load_controlnet_config()
+
+    def __str__(self): return json.dumps(self.__dict__)
+
+    def __load_controlnet_config(self):
+        import json
+        standard_config = None
+        try:
+            with open('.\\Engine\\ControlNet.json', 'r') as openfile:
+                jsonStr = json.load(openfile)
+            standard_config = dict(jsonStr)
+        except OSError:
+            standard_config = {
+                "canny_active":False,
+                "canny_path":"",
+                "depth_active":False,
+                "depth_path":"",
+                "hed_active":False,
+                "hed_path":"",
+                "mlsd_active":False,
+                "mlsd_path":"",
+                "normal_active":False,
+                "normal_path":"",
+                "openpose_active":False,
+                "openpose_path":"",
+                "seg_active":False,
+                "seg_path":"",
+            }
+        return standard_config
+
+    def load_config_from_disk(self):
+        self.config = self.__load_controlnet_config()
+        self.available_controlnet_models()
+
+    def save_controlnet_config(self,controlnet_config):
+        print("Salvando??")
+        print(type(controlnet_config))
+
+        import json
+        json_data=jsonstr=json.dumps(controlnet_config)
+        with open(".\\Engine\\ControlNet.json", "w") as outfile:
+            outfile.write(json_data)
+
+    def available_controlnet_models(self):
+        available=[]
+        for key, value in self.config.items():
+            if "active" in key and value == True:
+                model=key.split('_')[0]
+                available.append((model,self.config[model+"_path"]))
+        return available   #a list of tuples (model, path)
+
 

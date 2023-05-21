@@ -3,6 +3,7 @@ from Engine.General_parameters import Engine_Configuration
 from Engine.pipeline_onnx_stable_diffusion_instruct_pix2pix import OnnxStableDiffusionInstructPix2PixPipeline
 from Engine.pipeline_onnx_stable_diffusion_controlnet import OnnxStableDiffusionControlNetPipeline
 import gc
+import numpy as np
 
 from diffusers.utils import randn_tensor
 from diffusers import (
@@ -74,7 +75,7 @@ class SchedulersConfig(Borg):
     def __str__(self): return json.dumps(self.__dict__)
 
     def _load_list(self):
-        self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","KDPM2-A"]
+        self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","KDPM2-A","Karras"]
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","VQD","UnCLIP","Karras","KDPM2-A","IPNDMS"]
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC"]
 
@@ -352,34 +353,135 @@ class txt2img_pipe(Borg3):
             latents=image_np).images
         return batch_images, "vacio"
 
-    def get_initial_latent(self, steps,multiplier,generator,strengh):
+
+    def get_ordered_latents(self):
         from Engine.General_parameters import running_config
         import numpy as np
+        name=running_config().Running_information["Latent_Name"]
+        name1= name.split(',')
+        lista=[0]*len(name1)
+        for pair in name1:
+            tupla= pair.split(':')
+            lista[int(tupla[0])-1]=tupla[1]
+        print("Ordered numpys")
+        print(lista)
+        return lista
+
+
+    def sum_latents(self,latent_list,formula):
+        loaded_latent= None
+
+        #print("Analizando la formula:"+str(formula))
+
+        subformula_startmarks=list([pos for pos, char in enumerate(formula) if char == '('])
+        subformula_endmarks=list([pos for pos, char in enumerate(formula) if char == ')'])
+
+        if (len(subformula_endmarks) != len(subformula_startmarks)):
+            raise Exception("Sorry, Error in formula, check it")
+
+        if (len(subformula_startmarks) > 0):
+            contador1=0
+            while (len(subformula_startmarks)>contador1) and (subformula_startmarks[contador1] < subformula_endmarks[0]):
+                contador1+=1
+
+            #Extracts the first subformula
+            subformula=formula[(subformula_startmarks[0]+1):subformula_endmarks[contador1-1]]
+
+            previo=formula[0:(subformula_startmarks[0])]
+            posterior=formula[subformula_endmarks[contador1-1]+1:]
+
+            retorno, retorno2=self.sum_latents(latent_list,subformula)
+
+            if (len(previo)>0):
+                latent_previo, retorno_previo=self.sum_latents(latent_list,previo[:-1])
+                if ((previo[-1] =='w') or (previo[-1] =='W')):
+                    retorno = latent_previo + " Horizontal " + retorno
+                    retorno2 = np.concatenate((retorno_previo,retorno2),axis=3) #left & right
+                else:
+                    retorno = latent_previo + " Vertical " + retorno
+                    retorno2 = np.concatenate((retorno_previo,retorno2),axis=2)  #Up & Down
+
+            if (len(posterior)>0):
+                latent_posterior, retorno_posterior = self.sum_latents(latent_list,posterior[1:])
+                if ((posterior[0] =='w') or (posterior[0] =='W')):
+                    retorno = retorno + " Horizontal " + latent_posterior
+                    retorno2 = np.concatenate((retorno,retorno_posterior),axis=3) #left & right
+                else:
+                    retorno = retorno + " Vertical " + latent_posterior
+                    retorno2 = np.concatenate((retorno,retorno_posterior),axis=2)  #Up & Down
+        else:
+            position=-1
+            for pos, char in enumerate(formula):
+                if char in "WwHh":
+                    position=pos
+                    break
+            if position ==-1:
+                retorno=formula
+                retorno2=self.load_latent_file(latent_list,formula)
+            else:
+                index=formula[0:position]
+                retorno2=self.load_latent_file(latent_list,formula[0:position])
+                resultado3,retorno3=self.sum_latents(latent_list,formula[position+1:])
+                if (formula[position]=='w') or (formula[position] =='W'):
+                    retorno=index + "horizontal" + resultado3
+                    retorno2 = np.concatenate((retorno2,retorno3),axis=3) #left & right
+                else:
+                    retorno=index + "vertical" + resultado3
+                    retorno2 = np.concatenate((retorno2,retorno3),axis=2)  #Up & Down
+
+        return retorno, retorno2
+
+    def load_latent_file(self,latent_list,index):
+        loaded_latent = None
         if True:
         #try:
-            name=running_config().Running_information["Latent_Name"]
+            name=latent_list[int(index)-1]
+            print(f"Loading latent(idx:name):{index}:{name}")
             loaded_latent=np.load(f"./latents/{name}")
             print("Latent loaded")
-            self.txt2img_pipe.scheduler = SchedulersConfig().reset_scheduler()
-            if multiplier < 1:
-            #if False:
-                print("Multiplier applied (Use 1 as value, to do not apply)")
-                loaded_latent= multiplier * loaded_latent
-                #loaded_latent= 1/multiplier * loaded_latent
         #except:
-        else:
-            print("Latent not found")
-            return None
+            #print("Latent not found")  #if not found, just create noise, size ¿? 
+        return loaded_latent
+
+
+
+    def get_initial_latent(self, steps,multiplier,generator,strengh):
+        from Engine.General_parameters import running_config
+        latent_list=self.get_ordered_latents()
+        formula=running_config().Running_information["Latent_Formula"]
+        formula=formula.replace(' ', '')
+        formulafinal,loaded_latent=self.sum_latents(latent_list,formula)
+        print("Formula final"+formulafinal)
+
+        print("Resultant Latent Shape")
+        print("H:"+str(loaded_latent.shape[2]*8)+"x W:"+str(loaded_latent.shape[3]*8))
+
+        self.txt2img_pipe.scheduler = SchedulersConfig().reset_scheduler()
+
+        if multiplier < 1:
+            print("Multiplier applied (Use 1 as value, to do not apply)")
+            loaded_latent= multiplier * loaded_latent
+
+        noise = (0.1825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype) #works a lot better for EulerA than other schedulers  , why?
+
+        #if True:
+                #loaded_latent2= np.concatenate((loaded_latent2,loaded_latent1),axis=2)  #primero arriba y abajo
+                #loaded_latent= np.concatenate((loaded_latent,loaded_latent2),axis=3) #luego  + drcha+izda
+                #noise = generator.randn(*loaded_latent.shape).astype(loaded_latent.dtype)
+                #noise = (multiplier * np.random.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype)
+                #noise = np.random.Generator.random(loaded_latent.shape,loaded_latent.dtype) 
+
 
         offset = self.txt2img_pipe.scheduler.config.get("steps_offset", 0)
-        init_timestep = strengh
+        #init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar
+        init_timestep = int(steps * strengh) + 0 #Con 0.ocho funciona, con 9 un poco peor?, probar
+        init_timestep = min(init_timestep, steps)
+        #init_timestep = strengh
 
         timesteps = self.txt2img_pipe.scheduler.timesteps.numpy()[-init_timestep]
         #timesteps = np.array([timesteps] * batch_size * num_images_per_prompt)
 
-        #noise = generator.randn(*loaded_latent.shape).astype(loaded_latent.dtype)
-        #noise = np.random.random(loaded_latent.shape).astype(loaded_latent.dtype) 
-        noise = (0.1825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype)#works a lot better for EulerA than other schedulers  , why?
+
         import torch
         init_latents = self.txt2img_pipe.scheduler.add_noise(
             torch.from_numpy(loaded_latent), (torch.from_numpy(noise)).type(torch.LongTensor), (torch.from_numpy(np.array([timesteps])).type(torch.LongTensor))
@@ -414,16 +516,17 @@ class txt2img_pipe(Borg3):
             negative_prompt_embeds = None,
             latents=loaded_latent,
             callback= self.__callback,
-            callback_steps =2,
+            callback_steps = running_config().Running_information["Callback_Steps"],
             generator=rng).images
 
-        dictio={'prompt':prompt,'neg_prompt':neg_prompt,'height':height,'width':width,'steps':steps,'guid':guid,'eta':eta,'batch':batch,'seed':seed}
+        dictio={'prompt':prompt,'neg_prompt':neg_prompt,'height':height,'width':width,'steps':steps,'guid':guid,'eta':eta,'batch':batch,'seed':seed,'strengh':strengh}
         from Engine.General_parameters import running_config
         if running_config().Running_information["Save_Latents"]:
             print("Saving all latent_steps to disk")
             self.savelatents_todisk(seed=seed,contador=len(self.latents_list))
             print("Latents Saved")
         return batch_images,dictio
+
 
     def savelatents_todisk(self,path="./latents",seed=0,save_steps=False,contador=1000,callback_steps=2):
         import numpy as np
@@ -433,6 +536,7 @@ class txt2img_pipe(Borg3):
                 self.savelatents_todisk(path=path,seed=seed,save_steps=save_steps,contador=contador-1,callback_steps=callback_steps)
             np.save(f"{path}/Seed-{seed}_latent_Step-{contador*callback_steps}.npy", latent_to_save)
         return
+
 
     def __callback(self,i, t, latents):
         from Engine.General_parameters import running_config
@@ -468,6 +572,10 @@ class instruct_p2p_pipe(Borg4):
             Vae_and_Text_Encoders().load_vaedecoder(model_path)
         if Vae_and_Text_Encoders().vae_encoder == None:
             Vae_and_Text_Encoders().load_vaeencoder(model_path)
+
+        print(Vae_and_Text_Encoders().text_encoder)
+        print(Vae_and_Text_Encoders().vae_decoder)
+        print(Vae_and_Text_Encoders().vae_encoder)
 
         if " " in Engine_Configuration().MAINPipe_provider:
             provider =eval(Engine_Configuration().MAINPipe_provider)
@@ -603,22 +711,19 @@ class ControlNet_pipe(Borg6):
 
     def __str__(self): return json.dumps(self.__dict__)
 
-    def __load_ControlNet_model(self,model_path):
-        print("Cargando Controlnet")
+    def __load_ControlNet_model(self,model_path,ControlNET_drop):
+
         if " " in Engine_Configuration().ControlNet_provider:
             provider =eval(Engine_Configuration().ControlNet_provider)
         else:
             provider =Engine_Configuration().ControlNet_provider
+        print("Loading Controlnet:"+str(provider))
+        from Engine.General_parameters import ControlNet_config
+        available_models=dict(ControlNet_config().available_controlnet_models())
+        print(available_models)
+        ControlNet_path = available_models[ControlNET_drop]
+        print(ControlNet_path)
 
-        from Engine.General_parameters import UI_Configuration as UI_Configuration
-        ui_config=UI_Configuration()
-        if ui_config.Forced_ControlNet:
-            ControlNet_path=ui_config.forced_ControlNet_dir
-            print("Using Forced ControlNET model:"+ControlNet_path)
-        else:
-            ControlNet_path=model_path + "/controlnet"  ##ATTENCION, mirar que directorio por cada modelo onnx, este es de openpose
-
-        #con onnxruntime cargar el modelo controlnet
         controlnet_model = OnnxRuntimeModel.from_pretrained(ControlNet_path, provider=provider)
         return controlnet_model
 
@@ -633,7 +738,7 @@ class ControlNet_pipe(Borg6):
         unet_model = OnnxRuntimeModel.from_pretrained(model_path + "/unet", provider=provider)
         return unet_model
 
-    def initialize(self,model_path,sched_name):
+    def initialize(self,model_path,sched_name,ControlNET_drop):
         #from Engine.General_parameters import Engine_Configuration as en_config
         if Vae_and_Text_Encoders().text_encoder == None:
             Vae_and_Text_Encoders().load_textencoder(model_path)
@@ -649,7 +754,7 @@ class ControlNet_pipe(Borg6):
     
         if self.ControlNet_pipe == None:
             print("LLamando a las cargas")
-            self.controlnet_Model_ort= self.__load_ControlNet_model(model_path)
+            self.controlnet_Model_ort= self.__load_ControlNet_model(model_path,ControlNET_drop)
             #self.controlnet_unet_ort= self.__load_uNet_model(model_path)
             print("Creando pipe")
             self.ControlNet_pipe = OnnxStableDiffusionControlNetPipeline.from_pretrained(
@@ -666,7 +771,7 @@ class ControlNet_pipe(Borg6):
             )
         return self.ControlNet_pipe
 
-    def run_inference(self,prompt,neg_prompt,pose_image,width,height,eta,steps,guid,seed):
+    def run_inference(self,prompt,neg_prompt,input_image,pose_image,width,height,eta,steps,guid,seed):
         import numpy as np
         print(seed)
         rng = np.random.RandomState(int(seed))
