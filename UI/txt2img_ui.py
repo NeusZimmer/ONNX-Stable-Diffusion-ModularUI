@@ -16,6 +16,7 @@ def show_txt2img_ui():
     model_list = get_model_list()
     sched_list = get_schedulers_list()
     ui_config=UI_Configuration()
+
     gr.Markdown("Start typing below and then click **Generate** to see the output.")
     with gr.Row(): 
         with gr.Column(scale=13, min_width=650):
@@ -24,12 +25,15 @@ def show_txt2img_ui():
                 forced_vae = gr.Checkbox(label="Activate", value=False, interactive=True)
                 path_to_vae = gr.Textbox(value=ui_config.forced_VAE_Dir, lines=1, label="Alternative VAE")
             with gr.Accordion(label="Latents experimentals",open=False):
-                multiplier = gr.Slider(0, 1, value=0.5, step=0.05, label="Multiplier, blurry the ingested latent, 1 to do not modify", interactive=True)
-                #strengh_t0 = gr.Slider(0, 1, value=0.8, step=0.05, label="Strengh, or % of steps to apply the latent", interactive=True)
-                strengh_t0 = gr.Slider(0, 100, value=10, step=1, label="Strengh, or steps to apply the latent", interactive=True)
+                with gr.Accordion(label="How it works?",open=False):
+                    gr.Markdown(value=str(explanation1()))
+                multiplier = gr.Slider(0, 1, value=0.18215, step=0.05, label="Multiplier, blurry the ingested latent, 1 to do not modify", interactive=True)
+                strengh_t0 = gr.Slider(0, 1, value=0.8, step=0.05, label="Strengh, or % of steps to apply the latent", interactive=True)
+                #strengh_t0 = gr.Slider(0, 100, value=10, step=1, label="Strengh, or steps to apply the latent", interactive=True)
                 latents_experimental1 = gr.Checkbox(label="Save generated latents ", value=False, interactive=True)
                 latents_experimental2 = gr.Checkbox(label="Load latent from a generation", value=False, interactive=True)
                 name_of_latent = gr.Textbox(value="", lines=1, label="Name of Numpy- Latent")
+                latent_formula = gr.Textbox(value="", lines=1, label="Formula for the sumatory of latents")
                 latent_to_img_btn = gr.Button("Convert all latents to imgs", variant="primary", elem_id="gen_button")
             prompt_t0 = gr.Textbox(value="", lines=2, label="prompt")
             neg_prompt_t0 = gr.Textbox(value="", lines=2, label="negative prompt")
@@ -40,8 +44,8 @@ def show_txt2img_ui():
                 batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size")
             steps_t0 = gr.Slider(1, 300, value=16, step=1, label="steps")
             guid_t0 = gr.Slider(0, 50, value=7.5, step=0.1, label="guidance")
-            height_t0 = gr.Slider(256, 2048, value=512, step=64, label="height")
-            width_t0 = gr.Slider(256, 2048, value=512, step=64, label="width")
+            height_t0 = gr.Slider(64, 2048, value=512, step=64, label="height")
+            width_t0 = gr.Slider(64, 2048, value=512, step=64, label="width")
             eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=True)
             seed_t0 = gr.Textbox(value="", max_lines=1, label="seed")
             fmt_t0 = gr.Radio(["png", "jpg"], value="png", label="image format")
@@ -81,12 +85,12 @@ def show_txt2img_ui():
     clear_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
     forced_vae.change(fn=change_vae,inputs=[forced_vae,path_to_vae],outputs=None)
 
-    list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh_t0,name_of_latent]
+    list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh_t0,name_of_latent,latent_formula]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
     memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
     #test_btn.click(fn=test1,inputs=[model_drop,prompt_t0,neg_prompt_t0,sch_t0],outputs=image_out)
-    test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
+    #test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
     latents_experimental1.change(fn=_activate_latent_save, inputs=latents_experimental1, outputs= None)
     latents_experimental2.change(fn=_activate_latent_load, inputs=[latents_experimental2,name_of_latent], outputs= None)
     latent_to_img_btn.click(fn=_latent_to_img,inputs=None,outputs=None)
@@ -142,7 +146,7 @@ def _latent_to_img():
 def _activate_latent_save(activate_latent_save):
     from Engine.General_parameters import running_config
     running_config().Running_information.update({"Save_Latents":activate_latent_save})
-    print(running_config().Running_information["Save_Latents"])
+    #print(running_config().Running_information["Save_Latents"])
 
 def _activate_latent_load(activate_latent_load,name_of_latent):
     from Engine.General_parameters import running_config
@@ -237,12 +241,18 @@ def show_next_prompt():
     global next_prompt
     return next_prompt
 
-def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh,name_of_latent):
+def generate_click(
+    model_drop,prompt_t0,neg_prompt_t0,sch_t0,
+    iter_t0,batch_t0,steps_t0,guid_t0,height_t0,
+    width_t0,eta_t0,seed_t0,fmt_t0,multiplier,
+    strengh,name_of_latent,latent_formula):
+
     from Engine.pipelines_engines import txt2img_pipe
 
     Running_information= running_config().Running_information
     Running_information.update({"Running":True})
     Running_information.update({"Latent_Name":name_of_latent})
+    Running_information.update({"Latent_Formula":latent_formula})
 
     if Running_information["Load_Latents"]:
         Running_information.update({"Latent_Name":name_of_latent})
@@ -264,7 +274,6 @@ def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,st
         if running_config().Running_information["cancelled"]:
             break
         prompt,discard=gen_next_prompt(prompt_t0)
-        #running_config().parse_prompt_attention(prompt) 
         print(f"Iteration:{counter}/{iter_t0}")
         counter+=1
         batch_images,info = txt2img_pipe().run_inference(
@@ -335,9 +344,17 @@ def clean_memory_click():
     pipelines_engines.inpaint_pipe().unload_from_memory()
     pipelines_engines.instruct_p2p_pipe().unload_from_memory()
     pipelines_engines.img2img_pipe().unload_from_memory()
+    #Missing controlnet unload.
     gc.collect()
 
 def cancel_iteration():
     running_config().Running_information.update({"cancelled":True})
     print("\nCancelling at the end of the current iteration")
     
+
+def explanation1():
+    with open('./UI/Latent_Composition_Explanation.txt') as f:
+        lines = f.read()
+    return lines
+
+
