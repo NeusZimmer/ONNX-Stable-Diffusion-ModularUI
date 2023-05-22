@@ -1,12 +1,17 @@
 # ONNX-ModularUI
-An approach to make a more modular UI for ONNX Stable Diffusion, to ease future upgrades
 
-To make it work
+HI, as AMD user, with a low-profile 4gb GPU.... i was crazy trying to find a solution to make stable diffusion work in a usable way... I only found a viable option with ONNX on Windows, no ROCM and Shark were worst than ONNX under Windows...and i started to try and test models, and other options while trying to optimize the in-memory model comsumption and performance/balance.
+
+I've just decided to create this UI to allow a more granular approach on how the models are loaded and how they consum memory, and add some options that other versions already had...this is my approach, let me know your minds to improve it!
+
+This approach is to make a more modular UI for ONNX Stable Diffusion, is done having in mind the need to ease future upgrades and how they are applied, encapsulating the pipelines with additional options and methods.
+
+To make this works, 1st:  
 Follow install steps from :https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16/ and use it as your virtual environment for this code.
 
-Clone/Copy this repository on a directory of your preference, activate your python environment, and run "py ONNX-StableDiffusion.py"
+Clone/Copy this repository on a directory of your preference (git clone or download the zip), activate your python environment, and run "py ONNX-StableDiffusion.py", no need for additional installs.
 
-Current version provides support for: txt2img, img2img, Inpaint, instruct pix2pix.(control net in test phase), and NEW: reingest of a previous generation into a new one, it works closely to ControlNet without models ...
+It provides support for: txt2img, img2img, Inpaint, instruct pix2pix.(control net in test phase), and NEW: reingest of a previous generation into a new one, it works closely to ControlNet without models ...
 
 Allows modification of the pipeline providers without re-running the UI., also, you may want to run some pipeline in one graphic card, another card for VAE and CPU to the rest... this UI allows such granularity for :main model, schedulers, VAE, text encoder...
 
@@ -14,7 +19,7 @@ Allows the use of a different VAE for a model (many models got the same VAE , th
 
 Add a clean memory option: changing resolution for the inferences keep garbage in memory, and it ends making an impact on the time needed for the inferences.
 
-Also: wildcards, live prompts while running multiple iterations, a working deepdanbooru interrogator and resolution increase option. (one of my first tests with a ONNX model, a MS Model ([super-resolution-10.onnx]) to increase file resolution up to crazy sizes by slicing & joining (working , but not for professional uses)
+Also: wildcards, live prompts while running multiple iterations, a working deepdanbooru interrogator and resolution increase option. (one of my first tests with a ONNX model, a MS Model ([super-resolution-10.onnx]) to increase file resolution up to crazy sizes by slicing & joining (working , but not for professional uses) (todo: implement stable diffusion 4x upscale...)
 
 For DeepDanbooru model, download it from: https://huggingface.co/Neus/Onnx_DeepDanbooru/tree/main
 
