@@ -1,6 +1,6 @@
 # ONNX-ModularUI
 
-HI, as AMD user, with a low-profile 4gb GPU.... i was crazy trying to find a solution to make stable diffusion work in a usable way... I only found a viable option with ONNX on Windows, no ROCM and Shark were worst than ONNX under Windows...and i started to try and test models, and other options while trying to optimize the in-memory model comsumption and performance/balance.
+HI, as AMD user, with a low-profile 4gb GPU.... i was crazy trying to find a solution to make stable diffusion work in a usable way... I only found a viable option with ONNX on Windows, no ROCM or Shark, as they were worst on performance than ONNX under Windows...and i started to try and test models, and other options while trying to optimize the in-memory model comsumption and performance/balance.
 
 I've just decided to create this UI to allow a more granular approach on how the models are loaded and how they consum memory, and add some options that other versions already had...this is my approach, let me know your minds to improve it!
 
