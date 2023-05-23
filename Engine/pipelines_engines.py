@@ -408,7 +408,7 @@ class txt2img_pipe(Borg3):
                     retorno2 = np.concatenate((retorno,retorno_posterior),axis=3) #left & right
                 else:
                     retorno = retorno + " Vertical " + latent_posterior
-                    retorno2 = np.concatenate((retorno,retorno_posterior),axis=2)  #Up & Down
+                    retorno2 = np.concatenate((retorno2,retorno_posterior),axis=2)  #Up & Down
         else:
             position=-1
             for pos, char in enumerate(formula):
