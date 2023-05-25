@@ -405,7 +405,7 @@ class txt2img_pipe(Borg3):
                 latent_posterior, retorno_posterior = self.sum_latents(latent_list,posterior[1:])
                 if ((posterior[0] =='w') or (posterior[0] =='W')):
                     retorno = retorno + " Horizontal " + latent_posterior
-                    retorno2 = np.concatenate((retorno,retorno_posterior),axis=3) #left & right
+                    retorno2 = np.concatenate((retorno2,retorno_posterior),axis=3) #left & right
                 else:
                     retorno = retorno + " Vertical " + latent_posterior
                     retorno2 = np.concatenate((retorno2,retorno_posterior),axis=2)  #Up & Down
