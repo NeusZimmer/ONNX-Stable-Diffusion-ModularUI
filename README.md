@@ -54,8 +54,8 @@ and have a look into the Engine Configuration to see available option for runnin
 ![EngineOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/08d40866-d472-40b2-a001-5cf7a9d8513b)
 
 
-Currently, you may also select to use a specific VAE model to use for the inferences, saving some space on disk, as many models use the same versions, it will search for the first option, of not found will go for 2nd and then for 3rd...
-This also applies for ControlNet models, you may want to save one for each instance of your model, saving a lot of space on your disk.
+Currently, you may also select to use a specific VAE model to use for the inferences, saving some space on disk, as many models use the same versions, it will search for the first option, if not found, it will go for 2nd and then for 3rd...
+This also applies for ControlNet models, you could use the same one for all instances of your model, saving a lot of space on your disk.Note: you will still need the adapted Unet in the ControlNet directory.
 ![VAEOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/6232335f-9442-482b-ba0d-eca79c2bc09a)
 
 
