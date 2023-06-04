@@ -45,14 +45,11 @@ py -O ONNX-StableDiffusion.py
 
 ## Configuration
 At first run, you may need to configure the path for some options: output & models, and have a look into the Engine Configuration to see available option for running the different modules & pipelines.
-![UIOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/9e4fd9f4-f202-485d-a0ae-551e4931c6d8)
 
-![EngineOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/860855f7-22c3-47f8-b871-cdde6c6d1ab0)
 
 Currently, you may also select to use a specific VAE model to use for the inferences, saving some space on disk, as many models use the same versions, it will search for the first option, of not found will go for 2nd and then for 3rd...
 This also applies for ControlNet models, you may want to save one for each instance of your model, saving a lot of space on your disk.
 
-![VAEOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/75c32404-6dcc-4ed6-899a-4e9093d3cc14)
 
 
 
