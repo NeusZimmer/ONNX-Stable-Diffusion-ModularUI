@@ -1,0 +1,4 @@
+Base version of deepdanbooru.onnx model obtained from:https://huggingface.co/chinoll/deepdanbooru/tree/main
+Or my own converted version from: https://huggingface.co/Neus/Onnx_DeepDanbooru/tree/main
+
+Rename it as deepdanbooru.onnx and save into this directory
