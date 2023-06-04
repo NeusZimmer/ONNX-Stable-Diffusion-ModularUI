@@ -7,9 +7,12 @@ I've just decided to apply some of them into this UI to allow a granular approac
 The Stable Diffusion pipelines classes are encapsulated in new ones to allow them an easier management while adding other options around.
 
 **Current version:**
-	**-Main basic pipelines: Txt2Img, Img2Img, Pix2Pix, Inpaint, ControlNet**
-	**-Additional tools: 2 upscalers, deepdanbooru tagging, face detection, wildcards support**
-	**-Experimental feature: latents experimentals & image composition: creating one image using a sumatory of previous outputs, (one to many), working as something inbetween img2img and controlnet.**
+
+**-Main basic pipelines: Txt2Img, Img2Img, Pix2Pix, Inpaint, ControlNet**
+
+**-Additional tools: 2 upscalers, deepdanbooru tagging, face detection, wildcards support**
+	
+**-Experimental feature: latents experimentals & image composition: creating one image using a sumatory of previous outputs, (one to many), working as something inbetween img2img and controlnet.**
 
 ## Set up
 To make this works, 1st:  
@@ -44,13 +47,22 @@ py -O ONNX-StableDiffusion.py
 ```
 
 ## Configuration
-At first run, you may need to configure the path for some options: output & models, and have a look into the Engine Configuration to see available option for running the different modules & pipelines.
+At first run, you may need to configure the path for some options: output & models, 
+![UIOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/a160aacd-39ca-4ab4-b75b-3e7f4d0ff82c)
+
+and have a look into the Engine Configuration to see available option for running the different modules & pipelines.
+![EngineOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/08d40866-d472-40b2-a001-5cf7a9d8513b)
 
 
 Currently, you may also select to use a specific VAE model to use for the inferences, saving some space on disk, as many models use the same versions, it will search for the first option, of not found will go for 2nd and then for 3rd...
 This also applies for ControlNet models, you may want to save one for each instance of your model, saving a lot of space on your disk.
 ![VAEOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/6232335f-9442-482b-ba0d-eca79c2bc09a)
 
+
+
+You may check the info on the cmd window about what and where a model have been loaded:
+
+![CMD-Example](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/4151131a-5fe3-43a8-bb52-9360ed471127)
 
 
 
