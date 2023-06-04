@@ -1,13 +1,49 @@
 # ONNX-ModularUI
 
-HI, as AMD user, with a low-profile 4gb GPU.... i was crazy trying to find a solution to make stable diffusion work in a usable way... I only found a viable option with ONNX on Windows, no ROCM or Shark, as they were worst on performance than ONNX under Windows...and i started to try and test models, and other options while trying to optimize the in-memory model comsumption and performance/balance.
+Hello, I'm a **AMD user with a low-profile 4gb GPU**.... i gone crazy trying to find a solution to make stable diffusion work as fast as possible. I only found a viable option: ONNX on Windows, found it and  started to try and test models while trying to optimize the in-memory model comsumption and performance/balance on the available UIs.
 
-I've just decided to create this UI to allow a more granular approach on how the models are loaded and how they consum memory, and add some options that other versions already had...this is my approach, let me know your minds to improve it!
+I've just decided to apply some of them into this UI to allow a granular approach on how the models are loaded and how they consum memory, while adding some options that other versions already had. 
 
-This approach is to make a more modular UI for ONNX Stable Diffusion, is done having in mind the need to ease future upgrades and how they are applied, encapsulating the pipelines with additional options and methods.
+The Stable Diffusion pipelines classes are encapsulated in new ones to allow them an easier management while adding other options around.
 
+**Current version:
+**Main basic pipelines: Txt2Img, Img2Img, Pix2Pix, Inpaint, ControlNet
+**Additional tools: 2 upscalers, deepdanbooru tagging, face detection, wildcards support
+**Experimental feature: latents experimentals & image composition: creating one image using a sumatory of previous outputs, (one to many), working as something inbetween img2img and controlnet.
+
+## Set up
 To make this works, 1st:  
-Follow install steps from :https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16/ and use it as your virtual environment for this code.
+Follow install steps from :**https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16/** and use it as your virtual environment for this code.
+
+```
+git clone https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16
+cd Stable-Diffusion-ONNX-FP16
+```
+Then do the following:
+```
+pip install virtualenv
+python -m venv sd_env
+sd_env\scripts\activate
+python -m pip install --upgrade pip
+pip install torch --extra-index-url https://download.pytorch.org/whl/nightly/cpu --pre
+pip install -r requirements.txt
+```
+
+Under the previously installed directory:
+
+```
+git clone https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI.git
+```
+Activate its virtual environment and run
+```
+./sd_env/scripts/activate.bat
+cd ONNX-Stable-Diffusion-ModularUI
+run.bat
+or 
+py -O ONNX-StableDiffusion.py
+```
+
+
 
 Clone/Copy this repository on a directory of your preference (git clone or download the zip), activate your python environment, and run "py ONNX-StableDiffusion.py", no need for additional installs.
 
