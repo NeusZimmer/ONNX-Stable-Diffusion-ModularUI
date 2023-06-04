@@ -16,7 +16,7 @@ def show_controlnet_models_configuration():
                 with gr.Column(scale=1):
                     depth_active = gr.Checkbox(label="Depth Model Activated?", value=ControlNetConfig["depth_active"], interactive=True)
                 with gr.Column(scale=8):
-                    depth_path=gr.Textbox(label="Depth Model	 full path",lines=1, value=ControlNetConfig["depth_path"], visible=True, interactive=True)
+                    depth_path=gr.Textbox(label="Depth Model full path",lines=1, value=ControlNetConfig["depth_path"], visible=True, interactive=True)
             with gr.Row():
                 with gr.Column(scale=1):
                     hed_active = gr.Checkbox(label="Hed Model Activated?", value=ControlNetConfig["hed_active"], interactive=True)

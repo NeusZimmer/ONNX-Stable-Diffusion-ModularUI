@@ -25,7 +25,7 @@ def show_instructp2p_ui():
             guid_t0 = gr.Slider(0, 50, value=7.5, step=0.1, label="guidance")
             height_t0 = gr.Slider(256, 2048, value=512, step=64, label="height")
             width_t0 = gr.Slider(256, 2048, value=512, step=64, label="width")
-            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=False)
+            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=True)
             seed_t0 = gr.Textbox(value="", max_lines=1, label="seed")
             fmt_t0 = gr.Radio(["png", "jpg"], value="png", label="image format", visible=False)
         with gr.Column(scale=11, min_width=550):
@@ -42,9 +42,6 @@ def show_instructp2p_ui():
   
     #cancel_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
 
-
-
-    #global list_of_All_Parameters
     list_of_All_Parameters=[model_drop,prompt_t0,sch_t0,image_t0,iter_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
@@ -144,7 +141,8 @@ def clean_memory_click():
     pipelines_engines.txt2img_pipe().unload_from_memory()
     pipelines_engines.inpaint_pipe().unload_from_memory()
     pipelines_engines.instruct_p2p_pipe().unload_from_memory()
-    pipelines_engines.img2img_pipe().unload_from_memory() #Añadir al resto de UIs
+    pipelines_engines.img2img_pipe().unload_from_memory()
+    pipelines_engines.ControlNet_pipe().unload_from_memory()
     gc.collect()
 
 #def cancel_iteration():

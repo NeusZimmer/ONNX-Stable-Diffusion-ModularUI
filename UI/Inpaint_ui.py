@@ -8,18 +8,6 @@ from Engine import pipelines_engines
 
 from PIL import Image, PngImagePlugin
 
-#global list_of_All_Parameters
-#global running_scheduler
-#global next_prompt
-#global vaedec
-#global textenc
-#global pipe
-#global processed_images
-
-processed_images=[]
-#pipe = None
-#next_prompt=None
-
 def show_Inpaint_ui():
     ui_config=UI_Configuration()
     model_list = get_model_list()
@@ -28,9 +16,6 @@ def show_Inpaint_ui():
     with gr.Row(): 
         with gr.Column(scale=13, min_width=650):
             model_drop = gr.Dropdown(model_list, value=(model_list[0] if len(model_list) > 0 else None), label="model folder", interactive=True)
-            with gr.Accordion(label="Use Alternative VAE",open=False, visible=False):
-                forced_vae = gr.Checkbox(label="Activate", value=False, interactive=True)
-                path_to_vae = gr.Textbox(value=ui_config.forced_VAE_Dir, lines=1, label="Alternative VAE")
             prompt_t0 = gr.Textbox(value="", lines=2, label="prompt")
             neg_prompt_t0 = gr.Textbox(value="", lines=2, label="negative prompt")
             sch_t0 = gr.Radio(sched_list, value=sched_list[0], label="scheduler")
@@ -47,12 +32,12 @@ def show_Inpaint_ui():
             )
             with gr.Row():
                 iter_t0 = gr.Slider(1, 100, value=1, step=1, label="iteration count")
-                batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size")
+                batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size",visible=False)
             steps_t0 = gr.Slider(1, 300, value=16, step=1, label="steps")
             guid_t0 = gr.Slider(0, 50, value=7.5, step=0.1, label="guidance")
             height_t0 = gr.Slider(256, 2048, value=512, step=64, label="height")
             width_t0 = gr.Slider(256, 2048, value=512, step=64, label="width")
-            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=False)
+            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=True)
             seed_t0 = gr.Textbox(value="", max_lines=1, label="seed")
             fmt_t0 = gr.Radio(["png", "jpg"], value="png", label="image format")
         with gr.Column(scale=11, min_width=550):
@@ -68,33 +53,15 @@ def show_Inpaint_ui():
                 status_out = gr.Textbox(value="", label="status")
 
   
-    #forced_vae.change(fn=change_vae,inputs=[forced_vae,path_to_vae],outputs=None)
-
-
-
-    global list_of_All_Parameters
     list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,legacy_t0,sch_t0,image_t0,mask_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
-    #gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=None)
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
     memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
     clear_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
 
 
-def change_vae(forced_vae,path_to_vae):
-    from Engine.shared_params import UI_Configuration as UI_Configuration
-    ui_config=UI_Configuration()
-    ui_config.Forced_VAE =forced_vae
-    if ui_config.Forced_VAE:
-        ui_config.forced_VAE_Dir =path_to_vae
-    #else:
-    #    ui_config.forced_VAE_Dir =""
-    return
-
-
 
 def gallery_view(images,dict_statuses):
-    print(dict_statuses)
     return images[0]
 
 def get_model_list():
@@ -221,7 +188,8 @@ def clean_memory_click():
     pipelines_engines.txt2img_pipe().unload_from_memory()
     pipelines_engines.inpaint_pipe().unload_from_memory()
     pipelines_engines.instruct_p2p_pipe().unload_from_memory()
-    pipelines_engines.img2img_pipe().unload_from_memory() #Añadir al resto de UIs
+    pipelines_engines.img2img_pipe().unload_from_memory()
+    pipelines_engines.ControlNet_pipe().unload_from_memory()
     gc.collect()
 
 def cancel_iteration():

@@ -16,17 +16,14 @@ def show_txt2img_ui():
     model_list = get_model_list()
     sched_list = get_schedulers_list()
     ui_config=UI_Configuration()
-
     gr.Markdown("Start typing below and then click **Generate** to see the output.")
     with gr.Row(): 
         with gr.Column(scale=13, min_width=650):
             model_drop = gr.Dropdown(model_list, value=(model_list[0] if len(model_list) > 0 else None), label="model folder", interactive=True)
-            with gr.Accordion(label="Use Alternative VAE",open=False):
-                forced_vae = gr.Checkbox(label="Activate", value=False, interactive=True)
-                path_to_vae = gr.Textbox(value=ui_config.forced_VAE_Dir, lines=1, label="Alternative VAE")
+            with gr.Accordion("Partial Reloads",open=False):
+                reload_vae_btn = gr.Button("VAE Decoder:Apply Changes & Reload")
+                reload_model_btn = gr.Button("Model:Apply new model & Fast Reload Pipe")
             with gr.Accordion(label="Latents experimentals",open=False):
-                with gr.Accordion(label="How it works?",open=False):
-                    gr.Markdown(value=str(explanation1()))
                 multiplier = gr.Slider(0, 1, value=0.18215, step=0.05, label="Multiplier, blurry the ingested latent, 1 to do not modify", interactive=True)
                 strengh_t0 = gr.Slider(0, 1, value=0.8, step=0.05, label="Strengh, or % of steps to apply the latent", interactive=True)
                 #strengh_t0 = gr.Slider(0, 100, value=10, step=1, label="Strengh, or steps to apply the latent", interactive=True)
@@ -83,14 +80,15 @@ def show_txt2img_ui():
     image_out.select(fn=get_select_index, inputs=[image_out,status_out], outputs=[Selected_image_index,Selected_image_status])
     delete_btn.click(fn=delete_selected_index, inputs=[Selected_image_index,status_out], outputs=[image_out,status_out])
     clear_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
-    forced_vae.change(fn=change_vae,inputs=[forced_vae,path_to_vae],outputs=None)
+    reload_vae_btn.click(fn=change_vae,inputs=model_drop,outputs=None)
+    reload_model_btn.click(fn=change_model,inputs=model_drop,outputs=None)
 
     list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh_t0,name_of_latent,latent_formula]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
     memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
     #test_btn.click(fn=test1,inputs=[model_drop,prompt_t0,neg_prompt_t0,sch_t0],outputs=image_out)
-    #test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
+    test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
     latents_experimental1.change(fn=_activate_latent_save, inputs=latents_experimental1, outputs= None)
     latents_experimental2.change(fn=_activate_latent_load, inputs=[latents_experimental2,name_of_latent], outputs= None)
     latent_to_img_btn.click(fn=_latent_to_img,inputs=None,outputs=None)
@@ -167,14 +165,29 @@ def pruebas(prompt,negative_prompt):
     print(type(result))
     print(result)
 
-def change_vae(forced_vae,path_to_vae):
-    ui_config=UI_Configuration()
-    ui_config.Forced_VAE =forced_vae
-    if ui_config.Forced_VAE:
-        ui_config.forced_VAE_Dir =path_to_vae
-    #else:
-    #    ui_config.forced_VAE_Dir =""
+def change_vae(model_drop):
+    #ui_config=UI_Configuration()
+    #ui_config.Forced_VAE =forced_vae
+    from Engine.pipelines_engines import txt2img_pipe
+    from Engine.pipelines_engines import Vae_and_Text_Encoders
+    pipe=txt2img_pipe().txt2img_pipe
+    vae=Vae_and_Text_Encoders()
+    pipe.vae_decoder=vae.load_vaedecoder(f"{UI_Configuration().models_dir}\{model_drop}")
     return
+
+def change_model(model_drop):
+    from Engine.pipelines_engines import txt2img_pipe
+    pipe=txt2img_pipe().txt2img_pipe
+    modelpath=f"{UI_Configuration().models_dir}\{model_drop}"
+    pipe.unet=None
+    gc.collect()
+    pipe.unet=txt2img_pipe().reinitialize(modelpath)
+
+    Running_information= running_config().Running_information
+    Running_information.update({"model":model_drop})
+
+    return
+
 
 
 def delete_selected_index(Selected_image_index,status_out):
@@ -191,7 +204,6 @@ def get_select_index(image_out,status_out, evt:gr.SelectData):
     return evt.index,status_out[evt.index]
 
 def gallery_view(images,dict_statuses):
-    print(dict_statuses)
     return images[0]
 
 def get_model_list():
@@ -264,7 +276,6 @@ def generate_click(
 
     model_path=UI_Configuration().models_dir+"\\"+model_drop
     pipe=txt2img_pipe().initialize(model_path,sch_t0)
-
     txt2img_pipe().create_seeds(seed_t0,iter_t0,False)
     images= []
     information=[]
@@ -344,17 +355,10 @@ def clean_memory_click():
     pipelines_engines.inpaint_pipe().unload_from_memory()
     pipelines_engines.instruct_p2p_pipe().unload_from_memory()
     pipelines_engines.img2img_pipe().unload_from_memory()
-    #Missing controlnet unload.
+    pipelines_engines.ControlNet_pipe().unload_from_memory()	
     gc.collect()
 
 def cancel_iteration():
     running_config().Running_information.update({"cancelled":True})
     print("\nCancelling at the end of the current iteration")
     
-
-def explanation1():
-    with open('./UI/Latent_Composition_Explanation.txt') as f:
-        lines = f.read()
-    return lines
-
-

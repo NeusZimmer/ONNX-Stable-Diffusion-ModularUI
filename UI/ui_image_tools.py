@@ -1,14 +1,17 @@
 import gradio as gr
 import gc,os
 from Scripts import deepdanbooru_onnx as DeepDanbooru_Onnx
+from Scripts import facedetector_onnx as facedetector_onnx
 from Scripts import image_slicer
 from Scripts import superresolution as SPR
 
 
 global debug
 global danbooru
+global facedect
 global image_in
 danbooru = None
+facedect = None
 debug = False
 
 
@@ -20,11 +23,12 @@ def show_danbooru_area():
     with gr.Row():
         apply_btn = gr.Button("Analyze image with Deep DanBooru", variant="primary")
         mem_btn = gr.Button("Unload from memory")
-
     with gr.Row():
         results = gr.Textbox(value="", lines=8, label="Results")
+
     mem_btn.click(fn=unload_DanBooru, inputs=results , outputs=results)
     apply_btn.click(fn=analyze_DanBooru, inputs=image_in , outputs=results)
+
 
 def analyze_DanBooru(image):
     global danbooru
@@ -47,6 +51,7 @@ def unload_DanBooru(results):
 def show_image_resolution_area():
     with gr.Row():
         resolution_btn = gr.Button("Resize image with ONNX", variant="primary")
+        resolution_btn2 = gr.Button("Resize image with Stable Diffusion 4x", variant="primary")
     with gr.Row():
         test="prueba"
         gr.Markdown("Choose number of divisions to be applied (higher means higher resolution)"+"\nCurrent Image Size"+test)
@@ -56,14 +61,38 @@ def show_image_resolution_area():
         img_cols = gr.Slider(2, 30, value=4, label="Column Divisions",step=1)
     with gr.Row():
         image_out = gr.Image(label="Output image", type="pil", elem_id="image_out")
+        image_out2 = gr.Gallery(label="Output Faces")
     with gr.Row():
         Mem_btn = gr.Button("Clean SuperResolution Memory")
         delete_btn = gr.Button("Delete Temp dir")
 
+    with gr.Row():
+        facedect_btn = gr.Button("Analyze faces", variant="primary")
+        mem_facedect_btn = gr.Button("Unload from memory")
 
+    mem_facedect_btn.click(fn=unload_facedect, inputs=None , outputs=None)
+    facedect_btn.click(fn=analyze_Faces, inputs=image_in , outputs=[image_out,image_out2])
+
+
+    resolution_btn2.click(fn=Resize_Image2, inputs=[image_in,img_rows,img_cols,checkbox1], outputs=image_out)
     resolution_btn.click(fn=Resize_Image, inputs=[image_in,img_rows,img_cols,checkbox1], outputs=image_out)
     Mem_btn.click(fn=Clean_SPR_Mem, inputs=None, outputs=image_out)
     delete_btn.click(fn=DeleteTemp, inputs=None , outputs=None)
+
+
+def analyze_Faces(image):
+    global facedect
+    if facedect == None:
+        facedect = facedetector_onnx.FaceDetector()
+    results, faces =facedect(image)
+    return results, faces
+
+def unload_facedect():
+    global facedect
+    facedect= None
+    gc.collect
+    print("Face detection unload")
+    return 
 
 def ResizeAndJoin(row,col):
     for files in sorted(os.listdir("./Temp")):
@@ -137,6 +166,29 @@ def Resize_Image(image,img_rows,img_cols,checkbox1):
         img=Sharpen_Image(img) #Create option for them, they delay too much the creation
 
     return img
+
+
+def Resize_Image2(image,img_rows,img_cols,checkbox1):
+    import requests
+    from PIL import Image
+    from io import BytesIO
+    from diffusers import StableDiffusionUpscalePipeline
+    import torch
+
+    model_id = "stabilityai/stable-diffusion-x4-upscaler"
+    pipeline = StableDiffusionUpscalePipeline.from_pretrained(model_id, revision="fp16")
+    pipeline = pipeline.to("cpu")
+
+    low_res_img = image
+    low_res_img = low_res_img.resize((128, 128))
+    prompt = ""
+
+    upscaled_image = pipeline(prompt=prompt, image=low_res_img,num_inference_steps=2).images[0]
+
+
+    return upscaled_image
+
+
 
 
 def blur_Image(img):

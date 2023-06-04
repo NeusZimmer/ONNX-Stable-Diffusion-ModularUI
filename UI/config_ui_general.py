@@ -15,9 +15,6 @@ def show_general_configuration():
                 Models_Dir_Select=gr.Textbox(label="Models Directory",lines=1, value=ui_config.models_dir, visible=True, interactive=True)
                 Output_Path_Select=gr.Textbox(label="Output Directory",lines=1, value=ui_config.output_path, visible=True, interactive=True)
             with gr.Row():
-                VAE_Dir_Select=gr.Textbox(label="Force Model/VAE Directory to",lines=1, value=ui_config.forced_VAE_Dir, visible=True, interactive=True)
-                ControlNet_Dir_Select=gr.Textbox(label="Force Model/ControlNET Directory to",lines=1, value=ui_config.forced_ControlNet_dir, visible=True, interactive=True)
-            with gr.Row():
                 Txt2img_Tab = gr.Checkbox(label="Txt2img Tab",value=ui_config.Txt2img_Tab, info="De/Activate TAB(Applied in next run)")
                 InPaint_Tab = gr.Checkbox(label="In-Paint Tab",value=ui_config.InPaint_Tab, info="De/Activate TAB(Applied in next run)")
                 Img2Img_Tab = gr.Checkbox(label="Img2Img Tab",value=ui_config.Img2Img_Tab, info="De/Activate TAB(Applied in next run)")
@@ -30,7 +27,7 @@ def show_general_configuration():
                 apply_btn = gr.Button("Apply & Save config", variant="primary")
                 #loadconfig_btn = gr.Button("Load saved config")
 
-    UI_options=[Models_Dir_Select,Output_Path_Select,VAE_Dir_Select,ControlNet_Dir_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, Advanced_Config,UI_NetworkPort]
+    UI_options=[Models_Dir_Select,Output_Path_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, Advanced_Config,UI_NetworkPort]
     apply_btn.click(fn=applyandsave, inputs=UI_options,outputs=None)
     #loadconfig_btn.click(fn=loadconfig, inputs=Img2Img_Tab,outputs=Img2Img_Tab)
 
@@ -41,14 +38,12 @@ def loadconfig(grImg2Img_Tab):
 
 
 
-def applyandsave(Models_Dir_Select,Output_Path_Select,VAE_Dir_Select,ControlNet_Dir_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, Advanced_Config,UI_NetworkPort):
+def applyandsave(Models_Dir_Select,Output_Path_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, Advanced_Config,UI_NetworkPort):
     #UI_options=[Models_Dir_Select,Output_Path_Select,VAE_Dir_Select,ControlNet_Dir_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, Advanced_Config,UI_NetworkPort]
 
     ui_config=UI_Configuration()
     ui_config.models_dir=Models_Dir_Select
     ui_config.output_path=Output_Path_Select
-    ui_config.forced_VAE_Dir=VAE_Dir_Select
-    ui_config.forced_ControlNet_dir=ControlNet_Dir_Select
     ui_config.Txt2img_Tab=Txt2img_Tab
     ui_config.InPaint_Tab=InPaint_Tab
     ui_config.Img2Img_Tab=Img2Img_Tab

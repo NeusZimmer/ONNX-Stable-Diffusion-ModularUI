@@ -4,13 +4,11 @@ import os,gc,re,PIL
 from Engine.General_parameters import Engine_Configuration
 from Engine.General_parameters import running_config
 from Engine.General_parameters import UI_Configuration
-from Engine import pipelines_engines
 from Engine.General_parameters import ControlNet_config
+from Engine import pipelines_engines
 
 from PIL import Image, PngImagePlugin
 
-
-processed_images=[]
 
 def show_ControlNet_ui():
     ui_config=UI_Configuration()
@@ -34,13 +32,13 @@ def show_ControlNet_ui():
 
             with gr.Row():
                 iter_t0 = gr.Slider(1, 100, value=1, step=1, label="iteration count")
-                batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size", interactive=False, visible=False)
+                batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size",visible=False)
             steps_t0 = gr.Slider(1, 300, value=16, step=1, label="steps")
             guid_t0 = gr.Slider(0, 50, value=7.5, step=0.1, label="guidance")
             with gr.Row():
                 height_t0 = gr.Slider(256, 2048, value=512, step=64, label="height")
                 width_t0 = gr.Slider(256, 2048, value=512, step=64, label="width")
-            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=True)
+            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=False)
             seed_t0 = gr.Textbox(value="", max_lines=1, label="seed")
             #fmt_t0 = gr.Radio(["png", "jpg"], value="png", label="image format")
         with gr.Column(scale=11, min_width=550):

@@ -9,10 +9,6 @@ from Engine import pipelines_engines
 
 
 
-processed_images=[]
-#pipe = None
-#next_prompt=None
-
 def show_Img2Img_ui():
     ui_config=UI_Configuration()
     model_list = get_model_list()
@@ -21,9 +17,6 @@ def show_Img2Img_ui():
     with gr.Row(): 
         with gr.Column(scale=13, min_width=650):
             model_drop = gr.Dropdown(model_list, value=(model_list[0] if len(model_list) > 0 else None), label="model folder", interactive=True)
-            with gr.Accordion(label="Use Alternative VAE",open=False, visible=True):
-                forced_vae = gr.Checkbox(label="Activate", value=False, interactive=True)
-                path_to_vae = gr.Textbox(value=ui_config.forced_VAE_Dir, lines=1, label="Alternative VAE")
             prompt_t0 = gr.Textbox(value="", lines=2, label="prompt")
             neg_prompt_t0 = gr.Textbox(value="", lines=2, label="negative prompt")
             sch_t0 = gr.Radio(sched_list, value=sched_list[0], label="scheduler")
@@ -37,9 +30,9 @@ def show_Img2Img_ui():
             steps_t0 = gr.Slider(1, 300, value=16, step=1, label="steps")
             guid_t0 = gr.Slider(0, 50, value=7.5, step=0.1, label="guidance")
             strengh_t0 = gr.Slider(0, 1, value=0.75, step=0.05, label="Strengh")
-            height_t0 = gr.Slider(256, 2048, value=512, step=64, label="height")
-            width_t0 = gr.Slider(256, 2048, value=512, step=64, label="width")
-            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=False)
+            height_t0 = gr.Slider(256, 2048, value=512, step=64, label="Height")
+            width_t0 = gr.Slider(256, 2048, value=512, step=64, label="Width")
+            eta_t0 = gr.Slider(0, 1, value=0.0, step=0.01, label="DDIM eta", interactive=True)
             seed_t0 = gr.Textbox(value="", max_lines=1, label="seed")
             fmt_t0 = gr.Radio(["png", "jpg"], value="png", label="image format",visible=False)
         with gr.Column(scale=11, min_width=550):
@@ -47,11 +40,8 @@ def show_Img2Img_ui():
                 gen_btn = gr.Button("Process", variant="primary", elem_id="gen_button")
                 cancel_btn = gr.Button("Cancel",info="Cancel at end of current iteration",variant="stop", elem_id="gen_button")
                 memory_btn = gr.Button("Release memory", elem_id="mem_button")
-
-
             with gr.Row():
                 image_out = gr.Gallery(value=None, label="output images")
-
             with gr.Row():
                 status_out = gr.Textbox(value="", label="status")
 
@@ -61,21 +51,10 @@ def show_Img2Img_ui():
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
     memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
     cancel_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
-    forced_vae.change(fn=change_vae,inputs=[forced_vae,path_to_vae],outputs=None)
 
-
-def change_vae(forced_vae,path_to_vae):
-    ui_config=UI_Configuration()
-    ui_config.Forced_VAE =forced_vae
-    if ui_config.Forced_VAE:
-        ui_config.forced_VAE_Dir =path_to_vae
-    #else:
-    #    ui_config.forced_VAE_Dir =""
-    return
 
 
 def gallery_view(images,dict_statuses):
-    print(dict_statuses)
     return images[0]
 
 def get_model_list():
@@ -216,7 +195,8 @@ def clean_memory_click():
     pipelines_engines.txt2img_pipe().unload_from_memory()
     pipelines_engines.inpaint_pipe().unload_from_memory()
     pipelines_engines.instruct_p2p_pipe().unload_from_memory()
-    pipelines_engines.img2img_pipe().unload_from_memory() #Añadir al resto de UIs
+    pipelines_engines.img2img_pipe().unload_from_memory()
+    pipelines_engines.ControlNet_pipe().unload_from_memory()    
     gc.collect()
 
 def cancel_iteration():
