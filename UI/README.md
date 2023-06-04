@@ -10,6 +10,7 @@ Schedulers: Only Euler Ancestral and DDIM (with ETA=1), good results could start
 -Checkbox: "Load latent from generation" load the generated latent and apply it to the next generation
 -Name of Numpy latens: the latents are saved as .npy or numpy files, here you introducte the name (or names) of the numpy files to be applied (more on this later).
 -Formula, when using more than one latent you will need to define here how they will create the final image (more on this later)..
+![ExampleOfSums](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/a5c3ec9b-d94d-4c4f-a342-919b95cdf433)
 
 IMPORTANT: you are only allowed to use latents (or sumatory of them) of same size to the output image. If you are using a latent for a generated 512x512 img you will be only allowed to use it for a new 512x512 image, or ir you use two latents,  you will be able to sum them alongside the dimension that is equal in both files, adding the total size of the other dimension:one is 384x640 latent and another 256x640, result 640x640), trying to create a composition with complete diferent sizes will not work. ( cannot add 256x512 to 384x640....), be careful with this. Try first with only one file and get used to how it works prior trying to work with many latents....
 Example: one latent (width X height) 256x704 is added horizontally to a vertical composition of two other latents 384x192 and 384x512 (sum=384x640) : 640x704.
