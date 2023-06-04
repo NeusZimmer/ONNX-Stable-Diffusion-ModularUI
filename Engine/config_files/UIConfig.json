@@ -1,0 +1,1 @@
+{"models_dir": ".\\models", "output_path": ".\\output", "Txt2img_Tab": true, "InPaint_Tab": true, "Img2Img_Tab": true, "InstructP2P_Tab": 1, "ControlNet_Tab": 1, "Tools_Tab": true, "Advanced_Config": true, "GradioPort": "7860", "_UI_Configuration__loaded": true}
