@@ -23,7 +23,10 @@ class Borg3:
     _shared_state = {}
     def __init__(self):
         self.__dict__ = self._shared_state
-
+class Borg4:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
 
 class Engine_Configuration(Borg):
     MAINPipe_provider="Not Selected"
@@ -41,16 +44,17 @@ class Engine_Configuration(Borg):
 
     def save_config_json(self):
         jsonStr = json.dumps(self.__dict__)
-        print(type(jsonStr))
-        with open("EngineConfig.json", "w") as outfile:
+        #print(type(jsonStr))
+        with open("./Engine/config_files/EngineConfig.json", "w") as outfile:
             outfile.write(jsonStr)
+        print("Saving information for pipelines providers")
         print(jsonStr)
         return jsonStr
 
     def load_default_values(self):
         print("Loading default provider values:CPU")
         self.MAINPipe_provider="CPUExecutionProvider"
-        self.Scheduler_provider="CPUExecutionProvider"
+        self.Scheduler_provider="CPUExecutionProvider"	
         self.ControlNet_provider="CPUExecutionProvider"
         self.VAEDec_provider="CPUExecutionProvider"
         self.TEXTEnc_provider="CPUExecutionProvider"
@@ -58,7 +62,7 @@ class Engine_Configuration(Borg):
     
     def load_config_json(self):
         try:
-            with open('EngineConfig.json', 'r') as openfile:
+            with open('./Engine/config_files/EngineConfig.json', 'r') as openfile:
                 jsonStr = json.load(openfile)
                 self.MAINPipe_provider = jsonStr["MAINPipe_provider"]
                 self.Scheduler_provider = jsonStr["Scheduler_provider"]
@@ -75,8 +79,6 @@ class UI_Configuration(Borg1):
     models_dir=""
     output_path = ""
     wildcards_activated=True
-    forced_VAE_Dir = None
-    forced_ControlNet_dir =None
     Txt2img_Tab = None
     InPaint_Tab = None
     Img2Img_Tab = None
@@ -84,8 +86,6 @@ class UI_Configuration(Borg1):
     ControlNet_Tab = None
     Tools_Tab = None
     Advanced_Config = None
-    Forced_VAE = False
-    Forced_ControlNet = False
     GradioPort = 7860
 
     def __init__(self):
@@ -99,8 +99,6 @@ class UI_Configuration(Borg1):
         import os
         self.models_dir=os.getcwd()+"\\models"
         self.output_path=os.getcwd()+"\\output"
-        self.forced_VAE_Dir=os.getcwd()
-        self.forced_ControlNet_dir=os.getcwd()+"\\models"
         self.Txt2img_Tab = True
         self.InPaint_Tab = True
         self.Img2Img_Tab = True
@@ -108,25 +106,22 @@ class UI_Configuration(Borg1):
         self.InstructP2P_Tab = True
         self.ControlNet_Tab = True
         self.Advanced_Config = True
-        self.Forced_VAE = False
-        self.Forced_ControlNet = False
         self.GradioPort = 7860
 
     def save_config_json(self):
         jsonStr = json.dumps(self.__dict__)
-        with open("UIConfig.json", "w") as outfile:
+        with open("./Engine/config_files/UIConfig.json", "w") as outfile:
             outfile.write(jsonStr)
+        print("Saving UI Config")
         print(jsonStr)
         return jsonStr
 
     def __load_config_json(self):
         try:
-            with open('UIConfig.json', 'r') as openfile:
+            with open('./Engine/config_files/UIConfig.json', 'r') as openfile:
                 jsonStr = json.load(openfile)
                 self.models_dir = jsonStr["models_dir"]
                 self.output_path= jsonStr["output_path"]
-                self.forced_VAE_Dir= jsonStr["forced_VAE_Dir"]
-                self.forced_ControlNet_dir= jsonStr["forced_ControlNet_dir"]
                 self.Txt2img_Tab = jsonStr["Txt2img_Tab"]
                 self.InPaint_Tab = jsonStr["InPaint_Tab"]
                 self.Img2Img_Tab = jsonStr["Img2Img_Tab"]
@@ -155,6 +150,37 @@ class running_config(Borg2):
 
     def __str__(self): return json.dumps(self.__dict__)
 
+class VAE_config(Borg4):
+    config = None
+    def __init__(self):
+        Borg4.__init__(self)
+        if  self.config == None:
+            self.config = self.__load_VAE_config()
+
+    def __load_VAE_config(self):
+        import json
+        standard_config = None
+        try:
+            with open('./Engine/config_files/VAE_Preferences.json', 'r') as openfile:
+                jsonStr = json.load(openfile)
+            vae_config = list(jsonStr)
+        except OSError:
+            standard_config = ["model"]*6
+        self.config=vae_config
+        return vae_config
+
+    def save_VAE_config(self,vae_config):
+        print("Saving VAE Config")
+
+        import json
+        json_data=jsonstr=json.dumps(vae_config)
+        with open("./Engine/config_files/VAE_Preferences.json", "w") as outfile:
+            outfile.write(json_data)
+
+    def load_config_from_disk(self):
+        self.config = self.__load_VAE_config()
+        return self.config 
+
 
 class ControlNet_config(Borg3):
     config = None
@@ -169,7 +195,7 @@ class ControlNet_config(Borg3):
         import json
         standard_config = None
         try:
-            with open('.\\Engine\\ControlNet.json', 'r') as openfile:
+            with open('./Engine/config_files/ControlNet.json', 'r') as openfile:
                 jsonStr = json.load(openfile)
             standard_config = dict(jsonStr)
         except OSError:
@@ -196,12 +222,11 @@ class ControlNet_config(Borg3):
         self.available_controlnet_models()
 
     def save_controlnet_config(self,controlnet_config):
-        print("Salvando??")
-        print(type(controlnet_config))
+        print("Saving ControlNet models config")
 
         import json
         json_data=jsonstr=json.dumps(controlnet_config)
-        with open(".\\Engine\\ControlNet.json", "w") as outfile:
+        with open("./Engine/config_files/ControlNet.json", "w") as outfile:
             outfile.write(json_data)
 
     def available_controlnet_models(self):

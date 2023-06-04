@@ -1,5 +1,5 @@
 '''
-This code is copied from original pipeline, added only the break/cancel option during callbacks'''
+This code is copied from original pipeline, adding only the break option for callback'''
 
 import inspect
 from typing import Callable, List, Optional, Union
@@ -94,7 +94,7 @@ def __call__(
         list of `bool`s denoting whether the corresponding generated image likely represents "not-safe-for-work"
         (nsfw) content, according to the `safety_checker`.
     """
-    #print("Check working on substituted method")
+    #print("Using substituted pipe to allow inferences cancel")
     # check inputs. Raise error if not correct
     self.check_inputs(
         prompt, height, width, callback_steps, negative_prompt, prompt_embeds, negative_prompt_embeds
@@ -178,7 +178,7 @@ def __call__(
 
         if callback is not None and i % callback_steps == 0:
             cancel=callback(i, t, latents)
-            if cancel: break   #Added to allow cancel between steps(2)
+            if cancel: break
 
     latents = 1 / 0.18215 * latents
 
@@ -214,4 +214,5 @@ def __call__(
     if not return_dict:
         return (image, has_nsfw_concept)
 
+    #image.extend(images_saved)
     return StableDiffusionPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept)
