@@ -65,6 +65,8 @@ You may check the info on the cmd window about what and where a model have been 
 ![CMD-Example](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/4151131a-5fe3-43a8-bb52-9360ed471127)
 
 
+As you may see in the directory tree of one of my models, there's no need for VAE directories and also for the generic ControlNet Models:
+![ExampleControlNetModel](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/431144a8-77e9-41b3-8525-d8c3388e9f22)
 
 
 From previous readme: to be edited:
