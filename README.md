@@ -8,9 +8,7 @@ The Stable Diffusion pipelines classes are encapsulated in new ones to allow the
 
 **Current version:**
 **-Main basic pipelines: Txt2Img, Img2Img, Pix2Pix, Inpaint, ControlNet**
-
 **-Additional tools: 2 upscalers, deepdanbooru tagging, face detection, wildcards support**
-
 **-Experimental feature: latents experimentals & image composition: creating one image using a sumatory of previous outputs, (one to many), working as something inbetween img2img and controlnet.**
 
 ## Set up
