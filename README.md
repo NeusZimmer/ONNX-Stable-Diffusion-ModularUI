@@ -103,6 +103,7 @@ If you want to check the result image of each .npy file, you may click on "Conve
 Write down the name of the numpy to use for the next generated image and a different promt, (having in mind the constrains of the previously generated image)
 For only one latent use: "index:name.npy" formula: index (ie: "1:file.npy"  formula:"1")
 PD: Make sure the size (width and height) of the previous image is according to the new generation
+![ExampleOfSums](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/e572d604-e7f0-4343-b4dc-f1322169bb47)
 
 Here is the tricky part, Select Euler A, a multiplier ( best results range between 0.4 to 0.6 ) and a Strengh, strengh is the total steps you will be applying the numpy file, if you go fot 36 steps a good number could range from 28 to 32 (from 70% to 90%).
 Steps: you could have a good approach of the final image from 14-16 steps, and good results around 30 to 40 steps.
