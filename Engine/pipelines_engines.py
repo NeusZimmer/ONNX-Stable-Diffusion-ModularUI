@@ -594,7 +594,7 @@ class txt2img_pipe(Borg3):
 
         offset = self.txt2img_pipe.scheduler.config.get("steps_offset", 0)
         #init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar
-        init_timestep = int(steps * strengh) + 10 #Con 0.ocho funciona, con 9 un poco peor?, probar, aqui tenia puesto offset a 0
+        init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar, aqui tenia puesto offset a 0
         init_timestep = min(init_timestep, steps)
 
         timesteps = self.txt2img_pipe.scheduler.timesteps.numpy()[-init_timestep]
