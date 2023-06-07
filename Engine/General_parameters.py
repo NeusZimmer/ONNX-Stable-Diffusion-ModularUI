@@ -28,6 +28,12 @@ class Borg4:
     def __init__(self):
         self.__dict__ = self._shared_state
 
+class Borg5:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+
 class Engine_Configuration(Borg):
     MAINPipe_provider="Not Selected"
     Scheduler_provider="Not Selected"
@@ -181,6 +187,37 @@ class VAE_config(Borg4):
         self.config = self.__load_VAE_config()
         return self.config 
 
+class TextEnc_config(Borg5):
+    config = None
+    def __init__(self):
+        Borg5.__init__(self)
+        if  self.config == None:
+            self.config = self.__load_TextEnc_config()
+
+    def __load_TextEnc_config(self):
+        import json
+        TextEnc_config = None
+        try:
+            with open('./Engine/config_files/TextEnc_Preferences.json', 'r') as openfile:
+                jsonStr = json.load(openfile)
+            TextEnc_config = list(jsonStr)
+        except OSError:
+            TextEnc_config = ["model"]*2
+        self.config=TextEnc_config
+        return TextEnc_config
+
+    def save_TextEnc_config(self,TextEnc_config):
+        print("Salvando??")
+        print(type(TextEnc_config))
+
+        import json
+        json_data=json.dumps(TextEnc_config)
+        with open("./Engine/config_files/TextEnc_Preferences.json", "w") as outfile:
+            outfile.write(json_data)
+
+    def load_config_from_disk(self):
+        self.config = self.__load_TextEnc_config()
+        return self.config 
 
 class ControlNet_config(Borg3):
     config = None

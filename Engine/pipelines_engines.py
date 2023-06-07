@@ -157,6 +157,7 @@ class Vae_and_Text_Encoders(Borg1):
             vae_path1= (model_path + "/vae_decoder") if vae_config[0]=="model" else vae_config[0]
             vae_path2= (model_path + "/vae_decoder") if vae_config[1]=="model" else vae_config[1]
             vae_path3= (model_path + "/vae_decoder") if vae_config[2]=="model" else vae_config[2]                       
+            vae_path=""
 
             if os.path.exists(vae_path1): vae_path= vae_path1
             elif os.path.exists(vae_path2): vae_path= vae_path2
@@ -180,12 +181,13 @@ class Vae_and_Text_Encoders(Borg1):
         vae_config=running_config.Running_information["Vae_Config"]
         vae_path1= (model_path + "/vae_encoder") if vae_config[3]=="model" else vae_config[3]
         vae_path2= (model_path + "/vae_encoder") if vae_config[4]=="model" else vae_config[4]
-        vae_path3= (model_path + "/vae_encoder") if vae_config[5]=="model" else vae_config[5]                       
+        vae_path3= (model_path + "/vae_encoder") if vae_config[5]=="model" else vae_config[5]
+        vae_path=""
 
         if os.path.exists(vae_path1): vae_path= vae_path1
         elif os.path.exists(vae_path2): vae_path= vae_path2
         elif os.path.exists(vae_path3): vae_path= vae_path3
-        else: raise Exception("No valid vae encoder path"+vae_path)
+        else: raise Exception("No valid vae encoder path:"+vae_path)
 
 
         if " " in Engine_Configuration().VAEDec_provider:
@@ -210,10 +212,23 @@ class Vae_and_Text_Encoders(Borg1):
             provider = eval(Engine_Configuration().TEXTEnc_provider)
         else:
             provider = Engine_Configuration().TEXTEnc_provider
+        from Engine.General_parameters import running_config
+        running_config=running_config()
+        import os
+        if running_config.Running_information["Textenc_Config"]:
+            Textenc_Config=running_config.Running_information["Textenc_Config"]
+            Textenc_path1= (model_path + "/text_encoder") if Textenc_Config[0]=="model" else Textenc_Config[0]
+            Textenc_path2= (model_path + "/text_encoder") if Textenc_Config[1]=="model" else Textenc_Config[1]                     
+            Textenc_path=""
+            if os.path.exists(Textenc_path1): Textenc_path= Textenc_path1
+            elif os.path.exists(Textenc_path2): Textenc_path= Textenc_path2
+            else: raise Exception("No valid Text Encoder path:"+Textenc_path)
 
-        print(f"Loading TEXT encoder in:{provider}" )
+
+        print(f"Loading TEXT encoder in:{provider} from:{Textenc_path}" )
         self.text_encoder = None
-        self.text_encoder = OnnxRuntimeModel.from_pretrained(model_path + "/text_encoder", provider=provider)
+        #self.text_encoder = OnnxRuntimeModel.from_pretrained(model_path + "/text_encoder", provider=provider)
+        self.text_encoder = OnnxRuntimeModel.from_pretrained(Textenc_path, provider=provider)
         return self.text_encoder
     
 
@@ -579,7 +594,7 @@ class txt2img_pipe(Borg3):
 
         offset = self.txt2img_pipe.scheduler.config.get("steps_offset", 0)
         #init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar
-        init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar, aqui tenia puesto offset a 0
+        init_timestep = int(steps * strengh) + 10 #Con 0.ocho funciona, con 9 un poco peor?, probar, aqui tenia puesto offset a 0
         init_timestep = min(init_timestep, steps)
 
         timesteps = self.txt2img_pipe.scheduler.timesteps.numpy()[-init_timestep]
