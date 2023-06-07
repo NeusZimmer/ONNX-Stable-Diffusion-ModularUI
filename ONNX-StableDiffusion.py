@@ -35,11 +35,14 @@ def init_ui():
             from UI import config_ui_general
             from UI import config_ui_ControlNet
             from UI import config_ui_Vae
+            from UI import config_ui_TextEncoder
+
             config_ui_general.show_general_configuration()
             if ui_config.Advanced_Config:
                     from UI import config_ui_engine as config_ui_engine
                     config_ui_engine.show_providers_configuration()
                     config_ui_ControlNet.show_controlnet_models_configuration()
+                    config_ui_TextEncoder.show_textenc_models_configuration()
                     config_ui_Vae.show_vae_models_configuration()
                     #from UI import config_ui_wildcards as wilcards_ui_config
                     #wilcards_ui_config.show_wilcards_configuration()
@@ -63,6 +66,8 @@ Running_information.update({"Latent_Name":""})
 Running_information.update({"Latent_Formula":""})
 Running_information.update({"Callback_Steps":2})
 Running_information.update({"Vae_Config":["model"]*6})
+Running_information.update({"Textenc_Config":["model"]*2})
+
 
 Engine_Configuration().load_config_json()
 demo =init_ui()
