@@ -16,7 +16,7 @@ The Stable Diffusion pipelines classes are encapsulated in new ones to allow the
 
 ## Set up
 To make this works, 1st:  
-Follow install steps from :**https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16/** and use it as your virtual environment for this code.
+Follow the (shown below) install steps for ONNX Stabble diffusion (obtained from) :**https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16/** and use it as your virtual environment for the UI.
 
 ```
 git clone https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16
@@ -32,7 +32,7 @@ pip install torch --extra-index-url https://download.pytorch.org/whl/nightly/cpu
 pip install -r requirements.txt
 ```
 
-Under the previously installed directory:
+Under the previously installed directory, install the UI, only a couple of seconds download:
 
 ```
 git clone https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI.git
