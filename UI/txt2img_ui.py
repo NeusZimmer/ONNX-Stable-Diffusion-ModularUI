@@ -61,7 +61,7 @@ def show_txt2img_ui():
                         wildcard_show_btn = gr.Button("Show next prompt", elem_id="wildcard_button")
                         wildcard_gen_btn = gr.Button("Regenerate next prompt", variant="primary", elem_id="wildcard_button")
                         wildcard_apply_btn = gr.Button("Use edited prompt", elem_id="wildcard_button")
-                        test_btn = gr.Button("TESTS", elem_id="mem_button")
+                        #test_btn = gr.Button("TESTS", elem_id="mem_button")
             with gr.Row():
                 image_out = gr.Gallery(value=None, label="output images")
 
@@ -88,7 +88,7 @@ def show_txt2img_ui():
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
     memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
     #test_btn.click(fn=test1,inputs=[model_drop,prompt_t0,neg_prompt_t0,sch_t0],outputs=image_out)
-    test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
+    #test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
     latents_experimental1.change(fn=_activate_latent_save, inputs=latents_experimental1, outputs= None)
     latents_experimental2.change(fn=_activate_latent_load, inputs=[latents_experimental2,name_of_latent], outputs= None)
     latent_to_img_btn.click(fn=_latent_to_img,inputs=None,outputs=None)
