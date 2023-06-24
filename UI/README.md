@@ -1,3 +1,6 @@
+Only for Txt2Img: Latent Experimentals:
+
+
 The idea is to use previous generated images to create new ones, using their generated latents. 
 This works as a good ControlNet variation, but also allows to create completely new compositions, additional benefit i observed: using same generated info with same prompt might provide you with an excellent result in definition and in the final composition as the model will focus faster on the right elements....
 
