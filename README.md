@@ -14,6 +14,9 @@ The Stable Diffusion pipelines classes are encapsulated in new ones to allow the
 	
 **-Experimental feature: latents experimentals & image composition: creating one image using a sumatory of previous outputs, (one to many), working as something inbetween img2img and controlnet.**
 
+**Working features: You decide where to run&load each feature (model, vae, textenc...) based on your hardware , CUDA, DML, CPU... whitout reseting the UI. Avoid reusing of repeted models for VAE's, TextEncoder, ControlNet...**
+**And: wildards (for one or multiple iterations, also you could inclue wildcards inside other wildcards...), styles (examples available, modification now only by editing a json file, **
+
 ## Set up
 To make this works, 1st:  
 Follow the (shown below) install steps for ONNX Stabble diffusion (obtained from) :**https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16/** and use it as your virtual environment for the UI.
