@@ -316,8 +316,6 @@ def generate_click_inpaint(prompt_t0,neg_prompt_in,image_t0,mask_t0,steps):
     from Engine.General_parameters import running_config
     from Engine.General_parameters import UI_Configuration
 
-    print(f"The model configurated for restoring face is:{},i'm sure the path will be different for you. When you got an inpainting model you need to change this to your one, line 324 of ui_image_tools.py inside UI folder")
-
     Running_information= running_config().Running_information
     Running_information.update({"Running":True})
 
@@ -336,6 +334,8 @@ def generate_click_inpaint(prompt_t0,neg_prompt_in,image_t0,mask_t0,steps):
     sch_t0="DDIM"
     input_image = image_t0
     input_mask = mask_t0.convert("RGB")
+
+    print(f"The model configurated for restoring face is:{model_drop},i'm sure the path will be different for you. When you got an inpainting model you need to change this to your one, line 322 of ui_image_tools.py inside UI folder")
 
     if (Running_information["model"] != model_drop or Running_information["tab"] != "inpaint"):
         clean_memory_click()
