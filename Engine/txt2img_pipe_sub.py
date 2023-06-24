@@ -181,7 +181,10 @@ def __call__(
             if cancel: break
 
     latents = 1 / 0.18215 * latents
-
+    #latents = 1 / 0.08333 * latents    
+    #print(type(latents))
+    #print(type(latents.shape))
+    #print(latents.shape)
     # image = self.vae_decoder(latent_sample=latents)[0]
     # it seems likes there is a strange result for using half-precision vae decoder if batchsize>1
     image = np.concatenate(

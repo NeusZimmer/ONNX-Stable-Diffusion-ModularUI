@@ -29,7 +29,8 @@ from diffusers import (
     KarrasVeScheduler,
     IPNDMScheduler,
     KDPM2AncestralDiscreteScheduler,
-    DDIMInverseScheduler
+    DDIMInverseScheduler,
+    ScoreSdeVeScheduler
 )
 
 class Borg:
@@ -67,6 +68,7 @@ class SchedulersConfig(Borg):
     selected_scheduler= None
     _model_path = None
     _scheduler_name = None
+    _low_res_scheduler = None
 
     def __init__(self):
         Borg.__init__(self)
@@ -77,11 +79,17 @@ class SchedulersConfig(Borg):
 
     def _load_list(self):
         self.available_schedulers= ["DPMS_ms", "DPMS_ss", "DPMS++_Heun","DPMS_Heun", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","KDPM2-A"]
-        #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","VQD","UnCLIP","Karras","KDPM2-A","IPNDMS","DDIM-Inverse"]
+        #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","VQD","UnCLIP","Karras","KDPM2-A","IPNDMS","DDIM-Inverse","SDE-1"]
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC"]
 
     def reset_scheduler(self):
         return self.scheduler(self._scheduler_name,self._model_path)
+    
+    def low_res_scheduler(self,model_path=None):
+        if model_path==None:
+            model_path=self._model_path
+        self._low_res_scheduler = DPMSolverSinglestepScheduler.from_pretrained(self._model_path, subfolder="scheduler",provider=['DmlExecutionProvider'])
+        return self._low_res_scheduler    
 
     def scheduler(self,scheduler_name,model_path):
         scheduler = None
@@ -129,6 +137,10 @@ class SchedulersConfig(Borg):
                 scheduler = DPMSolverMultistepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver", solver_type="heun") 
             case "DPMS++_Heun":
                 scheduler = DPMSolverMultistepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver++", solver_type="heun") 
+            case "SDE-1":
+                scheduler = ScoreSdeVeScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver++", solver_type="heun") 
+           
+            
         self.selected_scheduler =scheduler
         return self.selected_scheduler
 
@@ -207,12 +219,13 @@ class Vae_and_Text_Encoders(Borg1):
         return self.vae_encoder
 
     def load_textencoder(self,model_path):
-        #Mirar si utilizar uno diferente (depende del tamaño en disco)
+        from Engine.General_parameters import running_config
+
         if " " in Engine_Configuration().TEXTEnc_provider:
             provider = eval(Engine_Configuration().TEXTEnc_provider)
         else:
             provider = Engine_Configuration().TEXTEnc_provider
-        from Engine.General_parameters import running_config
+
         running_config=running_config()
         import os
         if running_config.Running_information["Textenc_Config"]:
@@ -351,8 +364,7 @@ class txt2img_pipe(Borg3):
     running = False
     seeds = []
     latents_list = []
-    multiplier1= None
-
+ 
     def __init__(self):
         Borg3.__init__(self)
         self.latents_list = []
@@ -396,16 +408,9 @@ class txt2img_pipe(Borg3):
 
         if self.txt2img_pipe == None:
             import onnxruntime as ort
+            #from optimum.onnxruntime import ORTStableDiffusionPipeline as ort
             sess_options = ort.SessionOptions()
-            #sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
-            #sess_options.enable_mem_pattern = False
-            #sess_options.enable_mem_reuse = False
-            #sess_options.execution_mode = ort.ExecutionMode.ORT_PARALLEL
-            #sess_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
-            #sess_options.use_deterministic_compute=True
             sess_options.log_severity_level=3
-            #sess_options.intra_op_num_threads=2
-            #sess_options.inter_op_num_threads=2
             print(f"Loadint Txt2Img Pipeline in [{provider}]")            
             self.txt2img_pipe = OnnxStableDiffusionPipeline.from_pretrained(
                 model_path,
@@ -534,18 +539,15 @@ class txt2img_pipe(Borg3):
             index=int(data)
             name=latent_list[int(index)-1]
             if "noise" not in name:
-                #result="F"+name
                 print(f"Loading latent(idx:name):{index}:{name}")
                 result=np.load(f"./latents/{name}")
                 if False:
-                #if self.multiplier1 < 1:
-                    print("Multiplier applied (Use 1 as value, to do not apply)")
-                    loaded_latent= self.multiplier1 * result
+                    print("Multiplier 0.18215 applied")
+                    loaded_latent= 0.18215 * result
             else:
-                #result=name
                 noise_size=name.split("noise-")[1].split("x")
-                #print("noise_size"+str(noise_size))
-                noise = (0.4)*(generator.random((1,4,int(int(noise_size[1])/8),int(int(noise_size[0])/8))).astype(np.float32))
+                print(f"Creating noise block of W/H:{noise_size}")
+                noise = (0.3)*(generator.random((1,4,int(int(noise_size[1])/8),int(int(noise_size[0])/8))).astype(np.float32))
                 #noise = (generator.random((1,4,int(int(noise_size[1])/8),int(int(noise_size[0])/8))).astype(np.float32))
                 result = noise
 
@@ -571,12 +573,12 @@ class txt2img_pipe(Borg3):
 
 
     def get_initial_latent(self, steps,multiplier,generator,strengh):
+        debug = False
         from Engine.General_parameters import running_config
         latent_list=self.get_ordered_latents()
         formula=running_config().Running_information["Latent_Formula"]
         formula=formula.replace(' ', '')
         formula=formula.lower()
-        self.multiplier1=multiplier 
         #formulafinal,loaded_latent=self.sum_latents(latent_list,formula,generator,[])
         #print("Formula final"+formulafinal)
         loaded_latent=self.sum_latents(latent_list,formula,generator,[])
@@ -588,24 +590,28 @@ class txt2img_pipe(Borg3):
             print("Multiplier applied (Use 1 as value, to do not apply)")
             loaded_latent= multiplier * loaded_latent
 
-        noise = (0.3825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype) #works a lot better for EulerA&DDIM than other schedulers  , why?
+        noise = (0.3825 * generator.random(loaded_latent.shape)).astype(loaded_latent.dtype) #works a lot better for EulerA&DDIM than other schedulers  , why?
         #noise = (0.1825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype) #works a lot better for EulerA&DDIM than other schedulers  , why?
         #noise = (generator.random(loaded_latent.shape)).astype(loaded_latent.dtype)
 
         offset = self.txt2img_pipe.scheduler.config.get("steps_offset", 0)
+        if True:
+            offset= running_config().Running_information["offset"]
+        print(f"Offset:{offset}")
         #init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar
-        init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar, aqui tenia puesto offset a 0
+        init_timestep = int(steps * strengh) - offset #Con 0.ocho funciona, con 9 un poco peor?, probar, aqui tenia puesto offset a 0
+        print(f"init_timestep, {init_timestep}")
         init_timestep = min(init_timestep, steps)
-
+        print(f"init_timestep, {init_timestep}")
         timesteps = self.txt2img_pipe.scheduler.timesteps.numpy()[-init_timestep]
+        #timesteps = self.txt2img_pipe.scheduler.timesteps.numpy()[-offset]
+        print(f"timesteps, {timesteps}")
         #timesteps = np.array([timesteps] * batch_size * num_images_per_prompt)
 
 
         import torch
         init_latents = self.txt2img_pipe.scheduler.add_noise(
             torch.from_numpy(loaded_latent), (torch.from_numpy(noise)).type(torch.LongTensor), (torch.from_numpy(np.array([timesteps])).type(torch.LongTensor))
-            #(torch.from_numpy(noise)).type(torch.LongTensor), torch.from_numpy(loaded_latent), (torch.from_numpy(np.array([timesteps])).type(torch.LongTensor))
-            #Que pasaria si los pongo al reves los dos primeros???
         )
         init_latents = init_latents.numpy()
 
@@ -625,6 +631,18 @@ class txt2img_pipe(Borg3):
 
         if running_config().Running_information["Load_Latents"]:
             loaded_latent=self.get_initial_latent(steps,multiplier,rng,strengh)
+        prompt_embeds0 = None
+        """compel=False
+
+        if compel:
+
+            from compel import Compel
+            compel = Compel(tokenizer=self.txt2img_pipe.tokenizer, text_encoder=self.txt2img_pipe.text_encoder)
+            prompt_embeds0=compel(prompt)
+            print(prompt_embeds0)
+            print(type(prompt_embeds0))
+            prompt=None"""
+
 
         batch_images = self.txt2img_pipe(
             prompt=prompt,
@@ -635,7 +653,7 @@ class txt2img_pipe(Borg3):
             guidance_scale=guid,
             eta=eta,
             num_images_per_prompt=batch,
-            prompt_embeds = None,
+            prompt_embeds = prompt_embeds0,
             negative_prompt_embeds = None,
             latents=loaded_latent,
             callback= self.__callback,
@@ -651,7 +669,7 @@ class txt2img_pipe(Borg3):
         return batch_images,dictio
 
 
-    def savelatents_todisk(self,path="./latents",seed=0,save_steps=False,contador=1000,callback_steps=2):
+    def savelatents_todisk(self,path="./latents",seed=0,save_steps=True,contador=1000,callback_steps=2):
         import numpy as np
         if self.latents_list:
             latent_to_save= self.latents_list.pop()
