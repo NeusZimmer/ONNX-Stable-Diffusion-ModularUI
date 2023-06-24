@@ -21,6 +21,7 @@ def init_ui():
         if ui_config.Tools_Tab:
             with gr.Tab(label="Image Tools") as tab3:
                 from UI import ui_image_tools
+                ui_image_tools.show_input_image_area()
                 ui_image_tools.show_danbooru_area()
                 ui_image_tools.show_image_resolution_area()
         if ui_config.InstructP2P_Tab:
@@ -67,6 +68,8 @@ Running_information.update({"Latent_Formula":""})
 Running_information.update({"Callback_Steps":2})
 Running_information.update({"Vae_Config":["model"]*6})
 Running_information.update({"Textenc_Config":["model"]*2})
+Running_information.update({"offset":1})
+Running_information.update({"Style":False})
 
 
 Engine_Configuration().load_config_json()
