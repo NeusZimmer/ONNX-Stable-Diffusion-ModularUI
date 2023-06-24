@@ -26,7 +26,7 @@ def show_txt2img_ui():
             with gr.Accordion(label="Latents experimentals",open=False):
                 multiplier = gr.Slider(0, 1, value=0.18215, step=0.05, label="Multiplier, blurry the ingested latent, 1 to do not modify", interactive=True)
                 strengh_t0 = gr.Slider(0, 1, value=0.8, step=0.05, label="Strengh, or % of steps to apply the latent", interactive=True)
-                #strengh_t0 = gr.Slider(0, 100, value=10, step=1, label="Strengh, or steps to apply the latent", interactive=True)
+                offset_t0 = gr.Slider(0, 100, value=1, step=1, label="Offset Steps for the scheduler", interactive=True)
                 latents_experimental1 = gr.Checkbox(label="Save generated latents ", value=False, interactive=True)
                 latents_experimental2 = gr.Checkbox(label="Load latent from a generation", value=False, interactive=True)
                 name_of_latent = gr.Textbox(value="", lines=1, label="Name of Numpy- Latent")
@@ -53,6 +53,8 @@ def show_txt2img_ui():
                 memory_btn = gr.Button("Release memory", elem_id="mem_button")
                 #test_btn = gr.Button("Test")
             if ui_config.wildcards_activated:
+                from UI import styles_ui
+                styles_ui.show_styles_ui()
                 with gr.Accordion(label="Live Prompt & Wildcards for multiple iterations",open=False):
                     with gr.Row():
                         next_wildcard = gr.Textbox(value="",lines=4, label="Next Prompt", interactive=True)
@@ -61,7 +63,7 @@ def show_txt2img_ui():
                         wildcard_show_btn = gr.Button("Show next prompt", elem_id="wildcard_button")
                         wildcard_gen_btn = gr.Button("Regenerate next prompt", variant="primary", elem_id="wildcard_button")
                         wildcard_apply_btn = gr.Button("Use edited prompt", elem_id="wildcard_button")
-                        #test_btn = gr.Button("TESTS", elem_id="mem_button")
+                        test_btn = gr.Button("TESTS", elem_id="mem_button")
             with gr.Row():
                 image_out = gr.Gallery(value=None, label="output images")
 
@@ -83,12 +85,12 @@ def show_txt2img_ui():
     reload_vae_btn.click(fn=change_vae,inputs=model_drop,outputs=None)
     reload_model_btn.click(fn=change_model,inputs=model_drop,outputs=None)
 
-    list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh_t0,name_of_latent,latent_formula]
+    list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh_t0,name_of_latent,latent_formula,offset_t0]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
     memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
     #test_btn.click(fn=test1,inputs=[model_drop,prompt_t0,neg_prompt_t0,sch_t0],outputs=image_out)
-    #test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
+    test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
     latents_experimental1.change(fn=_activate_latent_save, inputs=latents_experimental1, outputs= None)
     latents_experimental2.change(fn=_activate_latent_load, inputs=[latents_experimental2,name_of_latent], outputs= None)
     latent_to_img_btn.click(fn=_latent_to_img,inputs=None,outputs=None)
@@ -113,6 +115,50 @@ def numpy_to_pil(images):
         pil_images = [Image.fromarray(image) for image in images]
     return pil_images
 
+
+def duplicar_canal(initial_image_channel):
+    import numpy as np
+    # i es la altura, j la anchura
+    upscaled_channel=np.zeros([2*initial_image_channel.shape[0], 2*initial_image_channel.shape[1]], dtype=np.float32)
+    for i in range(initial_image_channel.shape[0]):
+        for j in range(initial_image_channel.shape[1]):
+            upscaled_channel[i*2,j*2]=initial_image_channel[i,j]
+
+    for i in range(upscaled_channel.shape[0]):
+        #print(f"i:{i}")
+        for j in range(upscaled_channel.shape[1]):
+            #print(f"j:{j}")            
+            if (i%2==1):
+                i_adj1=i-1
+                i_adj2=i+1
+            else:
+                i_adj1=i
+                i_adj2=i
+                
+            if (j%2==1):
+                j_adj1=j-1
+                j_adj2=j+1
+            else:
+                j_adj1=j
+                j_adj2=j
+
+            if (i==(upscaled_channel.shape[0]-1)): 
+                i_adj2=i-1
+            if (j==(upscaled_channel.shape[1]-1)):
+                #print("Pasa por aqui")
+                j_adj2=j-1
+
+            #print(f"En pixel:[{i},{j}] Suma de:[{i_adj1},{j_adj1}][{i_adj1},{j_adj2}][{i_adj2},{j_adj1}][{i_adj2},{j_adj2}]")
+            pix1=upscaled_channel[i_adj1,j_adj1]
+            pix2=upscaled_channel[i_adj1,j_adj2]
+            pix3=upscaled_channel[i_adj2,j_adj1]
+            pix4=upscaled_channel[i_adj2,j_adj2]
+            valor_pixel=(pix1+pix2+pix3+pix4)/4
+            upscaled_channel[i,j]=valor_pixel
+
+    return upscaled_channel
+
+
 def _latent_to_img():
     import numpy as np
     latent_path="./latents"
@@ -124,20 +170,42 @@ def _latent_to_img():
                     latent_list.append(entry.name)
     except:
         model_list.append("Not numpys found")
+
     print(latent_list)
-    vaedec=vae_decoder=pipelines_engines.Vae_and_Text_Encoders().vae_decoder
+    vaedec=pipelines_engines.Vae_and_Text_Encoders().vae_decoder
+
+    if vaedec==None:
+        print("NO VAE LOADED, if you got a default VAE path configurated it will be loaded, if not, will raise an exception")
+        vaedec= pipelines_engines.Vae_and_Text_Encoders().load_vaedecoder("") 
+
     for latent in latent_list:
         loaded_latent=np.load(f"./latents/{latent}")
         loaded_latent = 1 / 0.18215 * loaded_latent
-        image = np.concatenate([vaedec(latent_sample=loaded_latent[i : i + 1])[0] for i in range(loaded_latent.shape[0])])
-        #image=vaedec(latent_sample=loaded_latent)[0]
+        #añadido desde aqui
+
+        """channels=[]
+        for canal in range(loaded_latent[0].shape[0]):
+            nuevo_canal=duplicar_canal(loaded_latent [0][canal])
+            channels.append(nuevo_canal)
+
+        #print(f"Channelsshape:{channels[0].shape}")
+        #print(f"Channelslen:{len(channels)}")        
+        loaded_latent1=np.ones([1,len(channels),channels[0].shape[0], channels[0].shape[1]], dtype=np.float32)
+        for index,channel in enumerate (channels):
+            loaded_latent1[0][index]= channel
+
+        print(loaded_latent1.shape)
+        print(loaded_latent.shape)
+        loaded_latent=loaded_latent1"""
+
+        #añadido hasta aqui, comentada la siguiente
+        #image = np.concatenate([vaedec(latent_sample=loaded_latent[i : i + 1])[0] for i in range(loaded_latent.shape[0])])
+        image=vaedec(latent_sample=loaded_latent)[0]  #comentar
         name= latent[:-3]
         name= name+"png"
         image = np.clip(image / 2 + 0.5, 0, 1)
         image = image.transpose((0, 2, 3, 1))
-
         image = numpy_to_pil(image)[0]
-        print(image)
         image.save(f"./latents/{name}",optimize=True)
     return
 
@@ -227,6 +295,16 @@ def select_scheduler(sched_name,model_path):
 
 def gen_next_prompt(prompt_t0,initial=False):
     global next_prompt
+    Running_information= running_config().Running_information    
+    style=Running_information["Style"]
+
+    style_pre =""
+    style_post=""
+    if style:
+        styles=style.split("|")
+        style_pre =styles[0]
+        style_post=styles[1]
+
     if (initial):
         next_prompt=None
         prompt=prompt_t0
@@ -237,6 +315,8 @@ def gen_next_prompt(prompt_t0,initial=False):
             prompt=wildcards_process(prompt_t0)
 
         next_prompt=wildcards_process(prompt_t0)
+    prompt = style_pre+" " +prompt+" " +style_post
+    #print(f"Prompt:{prompt}")
     return prompt,next_prompt
 
 def apply_prompt(prompt):
@@ -257,7 +337,7 @@ def generate_click(
     model_drop,prompt_t0,neg_prompt_t0,sch_t0,
     iter_t0,batch_t0,steps_t0,guid_t0,height_t0,
     width_t0,eta_t0,seed_t0,fmt_t0,multiplier,
-    strengh,name_of_latent,latent_formula):
+    strengh,name_of_latent,latent_formula,offset_t0):
 
     from Engine.pipelines_engines import txt2img_pipe
 
@@ -265,6 +345,8 @@ def generate_click(
     Running_information.update({"Running":True})
     Running_information.update({"Latent_Name":name_of_latent})
     Running_information.update({"Latent_Formula":latent_formula})
+    Running_information.update({"offset":offset_t0})
+
 
     if Running_information["Load_Latents"]:
         Running_information.update({"Latent_Name":name_of_latent})
