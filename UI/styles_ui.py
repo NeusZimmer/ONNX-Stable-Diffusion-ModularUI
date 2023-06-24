@@ -38,8 +38,8 @@ def get_styles():
     with open('./Engine/config_files/Styles.json', 'r') as openfile:
         jsonStr = json.load(openfile)
 
-    print(jsonStr)
-    print(type(jsonStr))
+    #print(jsonStr)
+    #print(type(jsonStr))
     jsonStr.update({"None":True})
     return jsonStr
 
