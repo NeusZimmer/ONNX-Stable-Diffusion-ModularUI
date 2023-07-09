@@ -4,13 +4,14 @@ import os,gc,re,PIL
 from Engine.General_parameters import Engine_Configuration
 from Engine.General_parameters import running_config
 from Engine.General_parameters import UI_Configuration
+from UI import UI_common_funcs as UI_common
 from Engine import pipelines_engines
 
 from PIL import Image, PngImagePlugin
 
 def show_Inpaint_ui():
     ui_config=UI_Configuration()
-    model_list = get_model_list()
+    model_list = UI_common.get_model_list("inpaint")
     sched_list = get_schedulers_list()
     gr.Markdown("Start typing below and then click **Process** to produce the output.")
     with gr.Row(): 
@@ -56,24 +57,13 @@ def show_Inpaint_ui():
     list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,legacy_t0,sch_t0,image_t0,mask_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
-    memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
-    clear_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
+    memory_btn.click(fn=UI_common.clean_memory_click, inputs=None, outputs=None)
+    clear_btn.click(fn=UI_common.cancel_iteration,inputs=None,outputs=None)
 
 
 
 def gallery_view(images,dict_statuses):
     return images[0]
-
-def get_model_list():
-    model_list = []
-    try:
-        with os.scandir(UI_Configuration().models_dir) as scan_it:
-            for entry in scan_it:
-                if entry.is_dir() and "npaint" in entry.name:
-                    model_list.append(entry.name)
-    except:
-        model_list.append("Models directory does not exist, configure it")
-    return model_list
 
 def get_schedulers_list():
     sched_config = pipelines_engines.SchedulersConfig()
@@ -105,7 +95,7 @@ def generate_click(model_drop,prompt_t0,neg_prompt_t0,legacy_t0,sch_t0,image_t0,
             #steps_t0 = step_adjustment(steps_t0, 0, "inpaint")
 
     if (Running_information["model"] != model_drop or Running_information["tab"] != "inpaint"):
-        clean_memory_click()
+        UI_common.clean_memory_click()
         Running_information.update({"model":model_drop})
         Running_information.update({"tab":"inpaint"})
 
@@ -182,19 +172,7 @@ def save_image(batch_images,info,next_index):
     for image in batch_images:
         image.save(os.path.join(output_path,f"{next_index:06}-00.{short_prompt}.png",),optimize=True,pnginfo=metadata,)
     
-def clean_memory_click():
-    print("Cleaning memory")
-    pipelines_engines.Vae_and_Text_Encoders().unload_from_memory()
-    pipelines_engines.txt2img_pipe().unload_from_memory()
-    pipelines_engines.inpaint_pipe().unload_from_memory()
-    pipelines_engines.instruct_p2p_pipe().unload_from_memory()
-    pipelines_engines.img2img_pipe().unload_from_memory()
-    pipelines_engines.ControlNet_pipe().unload_from_memory()
-    gc.collect()
 
-def cancel_iteration():
-    running_config().Running_information.update({"cancelled":True})
-    print("\nCancelling at the end of the current iteration")
     
 def resize_and_crop(input_image: PIL.Image.Image, height: int, width: int):
     input_width, input_height = input_image.size

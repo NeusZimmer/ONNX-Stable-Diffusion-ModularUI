@@ -82,6 +82,9 @@ class SchedulersConfig(Borg):
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC","VQD","UnCLIP","Karras","KDPM2-A","IPNDMS","DDIM-Inverse","SDE-1"]
         #self.available_schedulers= ["DPMS_ms", "DPMS_ss", "EulerA", "Euler", "DDIM", "LMS", "PNDM", "DEIS", "HEUN", "KDPM2", "UniPC"]
 
+    def schedulers_controlnet_list(self):
+        return ["DPMS_ms", "DPMS_ss", "DPMS++_Heun","DPMS_Heun", "DDIM", "LMS", "PNDM"]
+
     def reset_scheduler(self):
         return self.scheduler(self._scheduler_name,self._model_path)
     
@@ -214,7 +217,9 @@ class Vae_and_Text_Encoders(Borg1):
         sess_options = ort.SessionOptions()
         sess_options.log_severity_level=3
         print(f"Loading VAE encoder in:{provider}, from {vae_path}" )
-        self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider=provider,sess_options=sess_options)
+        #self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider='DmlExecutionProvider',sess_options=sess_options)
+        self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider='provider',sess_options=sess_options)
+        #print("Acordarse de cambiar donde carga el vae_encoder")
 
         return self.vae_encoder
 
@@ -840,7 +845,7 @@ class img2img_pipe(Borg5):
             num_images_per_prompt=batch,
             generator=rng,
         ).images
-        dictio={'prompt':prompt,'neg_prompt':neg_prompt,'steps':steps,'guid':guid,'eta':eta,'strength':strength,'seed':seed}
+        dictio={'Img2ImgPrompt':prompt,'neg_prompt':neg_prompt,'steps':steps,'guid':guid,'eta':eta,'strength':strength,'seed':seed}
         return batch_images,dictio
 
 
@@ -848,6 +853,7 @@ class ControlNet_pipe(Borg6):
 #import onnxruntime as ort
     controlnet_Model_ort= None
     #controlnet_unet_ort= None
+    ControlNET_Name=None
     ControlNet_pipe = None
     seeds = []
 
@@ -856,21 +862,33 @@ class ControlNet_pipe(Borg6):
 
     def __str__(self): return json.dumps(self.__dict__)
 
+    def load_ControlNet_model(self,model_path,ControlNET_drop):
+        self.__load_ControlNet_model(model_path,ControlNET_drop)
+
     def __load_ControlNet_model(self,model_path,ControlNET_drop):
+        from Engine.General_parameters import ControlNet_config
+        import onnxruntime as ort
 
         if " " in Engine_Configuration().ControlNet_provider:
             provider =eval(Engine_Configuration().ControlNet_provider)
         else:
             provider =Engine_Configuration().ControlNet_provider
-        print(f"Loading Controlnet in:{provider}")
-        from Engine.General_parameters import ControlNet_config
-        available_models=dict(ControlNet_config().available_controlnet_models())
-        #print(available_models)
-        ControlNet_path = available_models[ControlNET_drop]
-        #print(ControlNet_path)
+        print(f"Loading ControlNET model:{ControlNET_drop},in:{provider}")       
 
-        controlnet_model = OnnxRuntimeModel.from_pretrained(ControlNet_path, provider=provider)
-        return controlnet_model
+        available_models=dict(ControlNet_config().available_controlnet_models())
+ 
+
+        opts = ort.SessionOptions()
+        opts.enable_cpu_mem_arena = False
+        opts.enable_mem_pattern = False
+        opts.log_severity_level=3   
+        self.controlnet_Model_ort= None
+
+        self.ControlNET_Name=ControlNET_drop
+        ControlNet_path = available_models[ControlNET_drop]
+        self.controlnet_Model_ort = OnnxRuntimeModel.from_pretrained(ControlNet_path, sess_options=opts, provider=provider)
+      
+        return self.controlnet_Model_ort
 
     def __load_uNet_model(self,model_path):
         #Aqui cargar con ort el modelo unicamente en el provider principal.
@@ -896,10 +914,14 @@ class ControlNet_pipe(Borg6):
         opts = ort.SessionOptions()
         opts.enable_cpu_mem_arena = False
         opts.enable_mem_pattern = False
-    
+        opts.log_severity_level=3
+        print(f"Scheduler:{sched_name}")        
+        sched_pipe=SchedulersConfig().scheduler(sched_name,model_path)
         if self.ControlNet_pipe == None:
+            print(f"Using modified model for ControlNET:{model_path}")            
             self.controlnet_Model_ort= self.__load_ControlNet_model(model_path,ControlNET_drop)
             #self.controlnet_unet_ort= self.__load_uNet_model(model_path)
+
             self.ControlNet_pipe = OnnxStableDiffusionControlNetPipeline.from_pretrained(
                 #unet=self.controlnet_unet_ort,
                 model_path,
@@ -907,20 +929,27 @@ class ControlNet_pipe(Borg6):
                 vae_encoder=Vae_and_Text_Encoders().vae_encoder,
                 vae_decoder=Vae_and_Text_Encoders().vae_decoder,
                 text_encoder=Vae_and_Text_Encoders().text_encoder,
-                scheduler=SchedulersConfig().scheduler(sched_name,model_path),
-                #sess_options=opts, 
+                scheduler=sched_pipe,
+                sess_options=opts, 
                 provider = Engine_Configuration().MAINPipe_provider,
                 requires_safety_checker= False
             )
+        else:
+            self.ControlNet_pipe.scheduler= sched_pipe
+            if self.ControlNET_Name!=ControlNET_drop:
+                self.ControlNet_pipe.controlnet= None
+                gc.collect()
+                self.__load_ControlNet_model(model_path,ControlNET_drop)
+                self.ControlNet_pipe.controlnet= self.controlnet_Model_ort
+
         return self.ControlNet_pipe
 
-    def run_inference(self,prompt,neg_prompt,input_image,pose_image,width,height,eta,steps,guid,seed):
+    def run_inference(self,prompt,neg_prompt,input_image,width,height,eta,steps,guid,seed,pose_image=None,controlnet_conditioning_scale=1.0):
         import numpy as np
-        #print(seed)
         rng = np.random.RandomState(int(seed))
         image = self.ControlNet_pipe(
             prompt,
-            pose_image,
+            input_image,
             negative_prompt=neg_prompt,
             width = width,
             height = height,
@@ -929,19 +958,21 @@ class ControlNet_pipe(Borg6):
             eta=eta,
             num_images_per_prompt=1,
             generator=rng,
+            controlnet_conditioning_scale=controlnet_conditioning_scale
         ).images[0]
         #Añadir el diccionario
-        return image
+        dictio={'prompt':prompt,'neg_prompt':neg_prompt,'steps':steps,'guid':guid,'eta':eta,'strength':controlnet_conditioning_scale,'seed':seed}        
+        return image,dictio
 
     def create_seeds(self,seed=None,iter=1,same_seeds=False):
         self.seeds=seed_generator(seed,iter)
         if same_seeds:
-            for seed in seeds:
-                seed = seeds[0]
+            for seed in self.seeds:
+                seed = self.seeds[0]
 
     def unload_from_memory(self):
         self.ControlNet_pipe= None
-        controlnet_Model_ort= None
+        self.controlnet_Model_ort= None
         #controlnet_unet_ort= None
         gc.collect()
 

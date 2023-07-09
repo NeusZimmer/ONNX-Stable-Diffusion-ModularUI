@@ -49,7 +49,7 @@ from diffusers.utils import (
     logging,
     randn_tensor,
 )
-from diffusers.pipeline_utils import DiffusionPipeline
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 
 

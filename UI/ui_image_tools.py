@@ -113,8 +113,9 @@ def show_image_resolution_area():
                 with gr.Row():
                     generate_face_btn = gr.Button("Send to Inpaint, Generate Face", variant="primary")
                     checkbox2 = gr.Checkbox(label="Inpaint",value=True, info="Inpainting Active")
-                    checkbox3 = gr.Checkbox(label="GFPGan",value=True, info="GFPGan Active")
+                    checkbox3 = gr.Checkbox(label="GFPGan",value=False, info="GFPGan Active")
                     steps = gr.Slider(1, 100, value=20, label="Steps", step=1)
+                    seed_in = gr.Textbox(label="Seed",value="", lines=1)      
                 with gr.Row():
                     prompt_in = gr.Textbox(label="Prompt",value="", lines=1)
                     neg_prompt_in = gr.Textbox(label="Neg Prompt",value="blurry, bad anatomy, undefined, jpeg artifacts, noise", lines=1)                    
@@ -132,7 +133,7 @@ def show_image_resolution_area():
     image_out2.select(fn=selected_index,inputs=None)
     #inpaint_face_btn.click(fn=inpaint_face, inputs=[image_in,prompt_in], outputs=[image_out,image_out2])
     #convert_to_numpy_btn.click(fn=img_to_numpy, inputs=[image_in,height,width] , outputs=None)
-    generate_face_btn.click(fn=generate_click, inputs=[prompt_in,neg_prompt_in,face_image_in,steps,checkbox2,checkbox3] , outputs=face_image_in)
+    generate_face_btn.click(fn=generate_click, inputs=[prompt_in,neg_prompt_in,seed_in,face_image_in,steps,checkbox2,checkbox3] , outputs=[face_image_in,seed_in])
     resolution_btn2.click(fn=Resize_Image2, inputs=[image_in,resolution_prompt], outputs=image_out)
     resolution_btn.click(fn=Resize_Image, inputs=[image_in,img_rows,img_cols,checkbox1], outputs=image_out)
     Mem_btn.click(fn=Clean_SPR_Mem, inputs=None, outputs=image_out)
@@ -142,6 +143,7 @@ def show_image_resolution_area():
     send_gfpgan.click(fn=gfpgan_image, inputs=[image_out] , outputs=[image_out])
 
 def gfpgan_image(image_t0):
+    print("Entrada:")
     print(image_t0)
     print(type(image_t0))
     if isinstance(image_t0, list) or isinstance(image_t0, dict):
@@ -151,7 +153,7 @@ def gfpgan_image(image_t0):
         from PIL import Image
         result= image_t0
         #mask= Image.new("RGB", (result.size), (0, 0, 0))
-    return generate_click_gfpgan(result)
+    return generate_click_gfpgan(result,True)
 
 def exchange_image(image_out):
     return image_out
@@ -256,9 +258,10 @@ def Paste_Faces(image):
             img_with_boxes= facedect.paste_face(image,boxes[i],restored_face)
     return img_with_boxes, faces
 
-def generate_click(prompt_t0,neg_prompt_in,image_t0,steps,checkbox2,checkbox3):
+def generate_click(prompt_t0,neg_prompt_in,seed_in,image_t0,steps,checkbox2,checkbox3):
     #width=256
     #height=width
+    seed=""
     if isinstance(image_t0, list) or isinstance(image_t0, dict):
         result= image_t0["image"]
         mask= image_t0["mask"].convert("RGB")
@@ -270,7 +273,7 @@ def generate_click(prompt_t0,neg_prompt_in,image_t0,steps,checkbox2,checkbox3):
         mask= Image.new("RGB", (result.size), (0, 0, 0))
 
     if checkbox2:
-        result=generate_click_inpaint(prompt_t0,neg_prompt_in,result,mask,steps)
+        result,seed=generate_click_inpaint(prompt_t0,neg_prompt_in,seed_in,result,mask,steps)
     if checkbox3:
         result=generate_click_gfpgan(result)
 
@@ -278,7 +281,7 @@ def generate_click(prompt_t0,neg_prompt_in,image_t0,steps,checkbox2,checkbox3):
     global new_faces
     #result =result.resize([width,height], Image.Resampling.LANCZOS)
     new_faces[index]=result
-    return result
+    return result,seed
 
 
 def generate_click1(prompt_t0,image_t0,steps):
@@ -296,10 +299,13 @@ def generate_click1(prompt_t0,image_t0,steps):
     return new_face
 
 
-def generate_click_gfpgan(image_t0):
-    GFPGAN=codeformer_onnx.GFPGANFaceAugment("./Scripts/GFPGANv1.4.onnx")
-    #GFPGAN=codeformer_onnx.GFPGANFaceAugment("./Scripts/codeformer.onnx")
-
+def generate_click_gfpgan(image_t0, full=False):
+    if full:
+        GFPGAN=codeformer_onnx.GFPGANFaceAugment("./Scripts/anime-realesrgan-x4-default.onnx")
+    else:
+        GFPGAN=codeformer_onnx.GFPGANFaceAugment("./Scripts/GFPGANv1.4.onnx")    
+        #GFPGAN=codeformer_onnx.GFPGANFaceAugment("./Scripts/codeformer.onnx")
+    print(f"Model:{full}")
     #image=image_t0["image"]
     image=image_t0
     new_face = GFPGAN.forward(image)
@@ -311,15 +317,15 @@ def generate_click_gfpgan(image_t0):
 
 
 
-def generate_click_inpaint(prompt_t0,neg_prompt_in,image_t0,mask_t0,steps):
+def generate_click_inpaint(prompt_t0,neg_prompt_in,seed_in,image_t0,mask_t0,steps):
     from Engine.pipelines_engines import inpaint_pipe
     from Engine.General_parameters import running_config
     from Engine.General_parameters import UI_Configuration
 
     Running_information= running_config().Running_information
     Running_information.update({"Running":True})
-
-    model_drop="stable-diffusion-onnx-v2-inpainting"
+    model_drop="MergedModel-fp16-inpainting"
+    #model_drop="stable-diffusion-onnx-v2-inpainting"
     legacy_t0 = False
     neg_prompt_t0 = neg_prompt_in
     #neg_prompt_t0 = 
@@ -330,12 +336,12 @@ def generate_click_inpaint(prompt_t0,neg_prompt_in,image_t0,mask_t0,steps):
     width_t0=256
     batch_t0=1
     eta_t0 =0
-    seed_t0= None 
+    seed_t0 = int(seed_in) if seed_in!="" else None
     sch_t0="DDIM"
     input_image = image_t0
     input_mask = mask_t0.convert("RGB")
 
-    print(f"The model configurated for restoring face is:{model_drop},i'm sure the path will be different for you. When you got an inpainting model you need to change this to your one, line 322 of ui_image_tools.py inside UI folder")
+    print(f"The model configurated for restoring faces is:{model_drop},i'm sure the name will be different for you. When you got an inpainting model you need to change this to your one, line 322 of ui_image_tools.py inside UI folder")
 
     if (Running_information["model"] != model_drop or Running_information["tab"] != "inpaint"):
         clean_memory_click()
@@ -345,7 +351,7 @@ def generate_click_inpaint(prompt_t0,neg_prompt_in,image_t0,mask_t0,steps):
     model_path=ui_config=UI_Configuration().models_dir+"\\"+model_drop
     inpaint_pipe().initialize(model_path,sch_t0,legacy_t0)
 
-    inpaint_pipe().create_seeds(None,iter_t0,False)
+    inpaint_pipe().create_seeds(seed_in,iter_t0,False)
 
     for seed in inpaint_pipe().seeds:
         if running_config().Running_information["cancelled"]:
@@ -397,7 +403,7 @@ def generate_click_inpaint(prompt_t0,neg_prompt_in,image_t0,mask_t0,steps):
     global new_faces
     new_faces[index]=new_face
     generate_click2("",new_face,1)"""
-    return new_face
+    return new_face,inpaint_pipe().seeds[0]
 
 def unload_facedect():
     global facedect

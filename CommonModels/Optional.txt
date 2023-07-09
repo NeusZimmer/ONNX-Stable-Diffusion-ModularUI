@@ -1,0 +1,2 @@
+You might save here one or two VAEs,Text Encoder and ControlNET models ( not an unet modified model for Controlnet...)
+Configure them to be shared between all  your models, saving disk.

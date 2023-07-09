@@ -14,7 +14,8 @@ from diffusers.configuration_utils import FrozenDict
 from diffusers.schedulers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler
 from diffusers.utils import deprecate, logging, PIL_INTERPOLATION
 from diffusers.pipelines.onnx_utils import ORT_TO_NP_TYPE, OnnxRuntimeModel
-from diffusers.pipeline_utils import DiffusionPipeline
+#from diffusers.pipeline_utils import DiffusionPipeline
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 
 
@@ -387,8 +388,11 @@ class OnnxStableDiffusionControlNetPipeline(DiffusionPipeline):
                     controlnet_cond=image,
                 )
 
+              
                 mid_block_res_sample=blocksamples[12]
                 down_block_res_samples=blocksamples[0:12]
+
+
 
                 down_block_res_samples = [
                     down_block_res_sample * controlnet_conditioning_scale

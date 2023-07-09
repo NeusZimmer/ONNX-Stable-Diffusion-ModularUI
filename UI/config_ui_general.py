@@ -20,14 +20,19 @@ def show_general_configuration():
                 Img2Img_Tab = gr.Checkbox(label="Img2Img Tab",value=ui_config.Img2Img_Tab, info="De/Activate TAB(Applied in next run)")
                 InstructP2P_Tab = gr.Checkbox(label="InstructP2P Tab",value=ui_config.InstructP2P_Tab, info="De/Activate TAB(Applied in next run)")
                 Tools_Tab = gr.Checkbox(label="Image Tools Tab",value=ui_config.Tools_Tab, info="De/Activate TAB(Applied in next run)")
-                Advanced_Config = gr.Checkbox(label="Advanced Config",value=ui_config.Advanced_Config, info="Deactivate Avanced Options(Applied in next run)")
+                ControlNet_Tab = gr.Checkbox(label="ControlNet Tab",value=ui_config.ControlNet_Tab, info="De/Activate TAB(Applied in next run)")                
+
             with gr.Row():
+                Advanced_Config = gr.Checkbox(label="Advanced Config",value=ui_config.Advanced_Config, info="Deactivate Avanced Options(Applied in next run)")                
                 UI_NetworkPort=gr.Textbox(label="Gradio Server Port",lines=1, value=ui_config.GradioPort, visible=True, interactive=True)
             with gr.Row():
                 apply_btn = gr.Button("Apply & Save config", variant="primary")
                 #loadconfig_btn = gr.Button("Load saved config")
+        with gr.Row():                
+            from UI import edit_styles_ui
+            edit_styles_ui.show_edit_styles_ui()
 
-    UI_options=[Models_Dir_Select,Output_Path_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, Advanced_Config,UI_NetworkPort]
+    UI_options=[Models_Dir_Select,Output_Path_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, ControlNet_Tab, Advanced_Config,UI_NetworkPort]
     apply_btn.click(fn=applyandsave, inputs=UI_options,outputs=None)
     #loadconfig_btn.click(fn=loadconfig, inputs=Img2Img_Tab,outputs=Img2Img_Tab)
 
@@ -38,21 +43,23 @@ def loadconfig(grImg2Img_Tab):
 
 
 
-def applyandsave(Models_Dir_Select,Output_Path_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, Advanced_Config,UI_NetworkPort):
-    #UI_options=[Models_Dir_Select,Output_Path_Select,VAE_Dir_Select,ControlNet_Dir_Select,Txt2img_Tab, InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab, Advanced_Config,UI_NetworkPort]
-
+def applyandsave(Models_Dir_Select,Output_Path_Select,Txt2img_Tab,
+                 InPaint_Tab, Img2Img_Tab,InstructP2P_Tab,Tools_Tab,
+                 ControlNet_Tab, Advanced_Config,UI_NetworkPort):
+    
     ui_config=UI_Configuration()
     ui_config.models_dir=Models_Dir_Select
     ui_config.output_path=Output_Path_Select
     ui_config.Txt2img_Tab=Txt2img_Tab
     ui_config.InPaint_Tab=InPaint_Tab
     ui_config.Img2Img_Tab=Img2Img_Tab
+    ui_config.ControlNet_Tab=ControlNet_Tab
     ui_config.Tools_Tab=Tools_Tab
     ui_config.Advanced_Config=Advanced_Config
     ui_config.InstructP2P_Tab = int(InstructP2P_Tab)
     ui_config.GradioPort = UI_NetworkPort
 
-    print(ui_config)
+    #print(ui_config)
     print("Applied and saved, to work with these settings: clean memory and run any pipeline")
     ui_config.save_config_json()
 

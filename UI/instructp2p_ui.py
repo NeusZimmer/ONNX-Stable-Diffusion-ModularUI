@@ -1,16 +1,17 @@
 import gradio as gr
-import os,gc,re,PIL
+import os,re,PIL
 
 from Engine.General_parameters import Engine_Configuration
 from Engine.General_parameters import running_config
 from Engine.General_parameters import UI_Configuration as UI_Configuration
+from UI import UI_common_funcs as UI_common
 from Engine import pipelines_engines
 
 from PIL import Image, PngImagePlugin
 
 def show_instructp2p_ui():
     ui_config=UI_Configuration()
-    model_list = get_model_list()
+    model_list = UI_common.get_model_list("ip2p")
     sched_list = get_schedulers_list()
     #sched_list = get_schedulers_list() Modificar a los adecuados
     gr.Markdown("Start typing below and then click **Process** to produce the output.Attention: Image is not automatically saved.")
@@ -40,12 +41,12 @@ def show_instructp2p_ui():
                 status_out = gr.Textbox(value="", label="status")
 
   
-    #cancel_btn.click(fn=cancel_iteration,inputs=None,outputs=None)
+    #cancel_btn.click(fn=UI_common.cancel_iteration,inputs=None,outputs=None)
 
     list_of_All_Parameters=[model_drop,prompt_t0,sch_t0,image_t0,iter_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
-    memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
+    memory_btn.click(fn=UI_common.clean_memory_click, inputs=None, outputs=None)
 
 
 def get_model_list():
@@ -75,7 +76,7 @@ def generate_click(model_drop,prompt_t0,sch_t0,image_t0,iter_t0,steps_t0,guid_t0
     model_path=ui_config=UI_Configuration().models_dir+"\\"+model_drop
 
     if (Running_information["model"] != model_drop or Running_information["tab"] != "instruct_p2p"):
-        clean_memory_click()
+        UI_common.clean_memory_click()
         Running_information.update({"model":model_drop})
         Running_information.update({"tab":"instruct_p2p"})
 
@@ -135,19 +136,9 @@ def save_image(batch_images,info,next_index):
     for image in batch_images:
         image.save(os.path.join(output_path,f"{next_index:06}-00.{short_prompt}.png",),optimize=True,pnginfo=metadata,)
     
-def clean_memory_click():
-    print("Cleaning memory")
-    pipelines_engines.Vae_and_Text_Encoders().unload_from_memory()
-    pipelines_engines.txt2img_pipe().unload_from_memory()
-    pipelines_engines.inpaint_pipe().unload_from_memory()
-    pipelines_engines.instruct_p2p_pipe().unload_from_memory()
-    pipelines_engines.img2img_pipe().unload_from_memory()
-    pipelines_engines.ControlNet_pipe().unload_from_memory()
-    gc.collect()
 
-#def cancel_iteration():
-#    running_config().Running_information.update({"cancelled":True})
-#    print("\nCancelling at the end of the current iteration")
+
+
     
 def resize_and_crop(input_image: PIL.Image.Image, height: int, width: int):
     input_width, input_height = input_image.size

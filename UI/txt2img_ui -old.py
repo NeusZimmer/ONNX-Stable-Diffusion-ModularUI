@@ -5,7 +5,6 @@ from Engine.General_parameters import running_config
 from Engine.General_parameters import UI_Configuration
 from Engine import pipelines_engines
 from UI import UI_common_funcs as UI_common
-from Engine import engine_common_funcs as Engine_common
 from PIL import Image, PngImagePlugin
 
 global next_prompt
@@ -15,7 +14,7 @@ next_prompt=None
 
 
 def show_txt2img_ui():
-    model_list = UI_common.get_model_list("txt2img")
+    model_list = get_model_list()
     sched_list = get_schedulers_list()
     ui_config=UI_Configuration()
     gr.Markdown("Start typing below and then click **Generate** to see the output.")
@@ -104,7 +103,63 @@ def show_txt2img_ui():
         wildcard_show_btn.click(fn=show_next_prompt, inputs=None, outputs=next_wildcard)
         wildcard_apply_btn.click(fn=apply_prompt, inputs=next_wildcard, outputs=None)
 
+def numpy_to_pil(images):
+    """
+    Convert a numpy image or a batch of images to a PIL image.
+    """
+    from PIL import Image
+    if images.ndim == 3:
+        images = images[None, ...]
+    images = (images * 255).round().astype("uint8")
+    if images.shape[-1] == 1:
+        # special case for grayscale (single channel) images
+        pil_images = [Image.fromarray(image.squeeze(), mode="L") for image in images]
+    else:
+        pil_images = [Image.fromarray(image) for image in images]
+    return pil_images
 
+
+def duplicar_canal(initial_image_channel):
+    import numpy as np
+    # i es la altura, j la anchura
+    upscaled_channel=np.zeros([2*initial_image_channel.shape[0], 2*initial_image_channel.shape[1]], dtype=np.float32)
+    for i in range(initial_image_channel.shape[0]):
+        for j in range(initial_image_channel.shape[1]):
+            upscaled_channel[i*2,j*2]=initial_image_channel[i,j]
+
+    for i in range(upscaled_channel.shape[0]):
+        #print(f"i:{i}")
+        for j in range(upscaled_channel.shape[1]):
+            #print(f"j:{j}")            
+            if (i%2==1):
+                i_adj1=i-1
+                i_adj2=i+1
+            else:
+                i_adj1=i
+                i_adj2=i
+                
+            if (j%2==1):
+                j_adj1=j-1
+                j_adj2=j+1
+            else:
+                j_adj1=j
+                j_adj2=j
+
+            if (i==(upscaled_channel.shape[0]-1)): 
+                i_adj2=i-1
+            if (j==(upscaled_channel.shape[1]-1)):
+                #print("Pasa por aqui")
+                j_adj2=j-1
+
+            #print(f"En pixel:[{i},{j}] Suma de:[{i_adj1},{j_adj1}][{i_adj1},{j_adj2}][{i_adj2},{j_adj1}][{i_adj2},{j_adj2}]")
+            pix1=upscaled_channel[i_adj1,j_adj1]
+            pix2=upscaled_channel[i_adj1,j_adj2]
+            pix3=upscaled_channel[i_adj2,j_adj1]
+            pix4=upscaled_channel[i_adj2,j_adj2]
+            valor_pixel=(pix1+pix2+pix3+pix4)/4
+            upscaled_channel[i,j]=valor_pixel
+
+    return upscaled_channel
 
 
 def _latent_to_img():
@@ -116,11 +171,10 @@ def _latent_to_img():
             for entry in scan_it:
                 if ".npy" in entry.name:
                     latent_list.append(entry.name)
-        print(latent_list)                    
     except:
-        print("Not numpys found.Wrong Directory or no files inside?")        
+        model_list.append("Not numpys found")
 
-
+    print(latent_list)
     vaedec=pipelines_engines.Vae_and_Text_Encoders().vae_decoder
 
     if vaedec==None:
@@ -130,24 +184,45 @@ def _latent_to_img():
     for latent in latent_list:
         loaded_latent=np.load(f"./latents/{latent}")
         loaded_latent = 1 / 0.18215 * loaded_latent
-        image=vaedec(latent_sample=loaded_latent)[0]  
+        #añadido desde aqui
+
+        """channels=[]
+        for canal in range(loaded_latent[0].shape[0]):
+            nuevo_canal=duplicar_canal(loaded_latent [0][canal])
+            channels.append(nuevo_canal)
+
+        #print(f"Channelsshape:{channels[0].shape}")
+        #print(f"Channelslen:{len(channels)}")        
+        loaded_latent1=np.ones([1,len(channels),channels[0].shape[0], channels[0].shape[1]], dtype=np.float32)
+        for index,channel in enumerate (channels):
+            loaded_latent1[0][index]= channel
+
+        print(loaded_latent1.shape)
+        print(loaded_latent.shape)
+        loaded_latent=loaded_latent1"""
+
+        #añadido hasta aqui, comentada la siguiente
+        #image = np.concatenate([vaedec(latent_sample=loaded_latent[i : i + 1])[0] for i in range(loaded_latent.shape[0])])
+        image=vaedec(latent_sample=loaded_latent)[0]  #comentar
         name= latent[:-3]
         name= name+"png"
         image = np.clip(image / 2 + 0.5, 0, 1)
         image = image.transpose((0, 2, 3, 1))
-        image = Engine_common.numpy_to_pil(image)[0]
+        image = numpy_to_pil(image)[0]
         image.save(f"./latents/{name}",optimize=True)
-
     return
 
 def _activate_latent_save(activate_latent_save):
     from Engine.General_parameters import running_config
     running_config().Running_information.update({"Save_Latents":activate_latent_save})
+    #print(running_config().Running_information["Save_Latents"])
 
 def _activate_latent_load(activate_latent_load,name_of_latent):
     from Engine.General_parameters import running_config
     running_config().Running_information.update({"Load_Latents":activate_latent_load})
-
+    #running_config().Running_information.update({"Latent_Name":name_of_latent})
+    #name=running_config().Running_information["Latent_Name"]
+    #print(f"./latents/{name}")
 
 def pruebas(prompt,negative_prompt):
     from Engine import textual_inversion
@@ -162,6 +237,8 @@ def pruebas(prompt,negative_prompt):
     print(result)
 
 def change_vae(model_drop):
+    #ui_config=UI_Configuration()
+    #ui_config.Forced_VAE =forced_vae
     from Engine.pipelines_engines import txt2img_pipe
     from Engine.pipelines_engines import Vae_and_Text_Encoders
     pipe=txt2img_pipe().txt2img_pipe
@@ -200,7 +277,16 @@ def get_select_index(image_out,status_out, evt:gr.SelectData):
 def gallery_view(images,dict_statuses):
     return images[0]
 
-
+def get_model_list():
+    model_list = []
+    try:
+        with os.scandir(UI_Configuration().models_dir) as scan_it:
+            for entry in scan_it:
+                if entry.is_dir():
+                    model_list.append(entry.name)
+    except:
+        model_list.append("Models directory does not exist, configure it")
+    return model_list
 
 def get_schedulers_list():
     sched_config = pipelines_engines.SchedulersConfig()
@@ -279,7 +365,7 @@ def generate_click(
     images= []
     information=[]
     counter=1
-    img_index=Engine_common.get_next_save_index(output_path=UI_Configuration().output_path)
+    img_index=get_next_save_index()
     for seed in txt2img_pipe().seeds:
         if running_config().Running_information["cancelled"]:
             break
@@ -301,7 +387,7 @@ def generate_click(
         info['Sched:']=sch_t0
         info['Multiplier:']=multiplier
         information.append(info)
-        Engine_common.save_image(batch_images,info,img_index,UI_Configuration().output_path)
+        save_image(batch_images,info,img_index)
         img_index+=1
 
     running_config().Running_information.update({"cancelled":False})
@@ -313,9 +399,38 @@ def generate_click(
     #return separadas,information
 
 
+def get_next_save_index():
+    output_path=UI_Configuration().output_path
+    dir_list = os.listdir(output_path)
+    if len(dir_list):
+        pattern = re.compile(r"([0-9][0-9][0-9][0-9][0-9][0-9])-([0-9][0-9])\..*")
+        match_list = [pattern.match(f) for f in dir_list]
+        next_index = max([int(m[1]) if m else -1 for m in match_list]) + 1
+    else:
+        next_index = 0
+    return next_index
 
 
+def save_image(batch_images,info,next_index):
+    output_path=UI_Configuration().output_path
 
+    info_png = f"{info}"
+    metadata = PngImagePlugin.PngInfo()
+    metadata.add_text("parameters",info_png)
+    prompt=info["prompt"]
+    short_prompt = prompt.strip("<>:\"/\\|?*\n\t")
+    short_prompt = re.sub(r'[\\/*?:"<>|\n\t]', "", short_prompt)
+    short_prompt = short_prompt[:49] if len(short_prompt) > 50 else short_prompt
 
+    os.makedirs(output_path, exist_ok=True)
+    """dir_list = os.listdir(output_path)
+    if len(dir_list):
+        pattern = re.compile(r"([0-9][0-9][0-9][0-9][0-9][0-9])-([0-9][0-9])\..*")
+        match_list = [pattern.match(f) for f in dir_list]
+        next_index = max([int(m[1]) if m else -1 for m in match_list]) + 1
+    else:
+        next_index = 0"""
+    for image in batch_images:
+        image.save(os.path.join(output_path,f"{next_index:06}-00.{short_prompt}.png",),optimize=True,pnginfo=metadata,)
     
     

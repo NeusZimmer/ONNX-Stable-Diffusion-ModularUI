@@ -59,6 +59,7 @@ css1 = """
 Running_information= running_config().Running_information
 Running_information.update({"cancelled":False})
 Running_information.update({"model":""})
+Running_information.update({"ControlNetModel":""}) #check if used
 Running_information.update({"tab":""})
 Running_information.update({"Running":False})
 Running_information.update({"Save_Latents":False})

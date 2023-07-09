@@ -19,7 +19,7 @@ def download_model():
     #return "./Scripts/correction-codeformer.onnx"
     #return "./Scripts/correction-gfpgan-v1-3.onnx"
     #Download model from : https://huggingface.co/Neus/GFPGANv1.4/
-    return "./Scripts/GFPGANv1.4.onnx"
+    return "./Scripts/GFPGan_model/GFPGANv1.4.onnx"
 
 class CodeFormer:
     def __init__(self, mode: str = "auto"):
@@ -45,14 +45,15 @@ class CodeFormer:
         model_path = download_model()
 
         #self.session = ort.InferenceSession(model_path, providers=[providers[mode]])
-        self.session = ort.InferenceSession(model_path, providers=['DmlExecutionProvider', 'CPUExecutionProvider'])
+        #self.session = ort.InferenceSession(model_path, providers=['DmlExecutionProvider', 'CPUExecutionProvider'])
+        self.session = ort.InferenceSession(model_path, providers=['CPUExecutionProvider'])        
 
         self.input_name = self.session.get_inputs()[0].name
-        print(f"Shape:{self.session.get_inputs()[0].shape}")
+        """print(f"Shape:{self.session.get_inputs()[0].shape}")
         print(f"Long salida:{len(self.session.get_outputs())}")
         print("Sessiones inicio")
         print(self.session.get_inputs()[0])
-        print(self.session.get_inputs())
+        print(self.session.get_inputs())"""
         self.output_name = [output.name for output in self.session.get_outputs()]
         self.mode = mode
         self.cache = {}
