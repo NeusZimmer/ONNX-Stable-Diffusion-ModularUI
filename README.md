@@ -2,12 +2,14 @@
 
 Hello, I'm a **AMD user with a low-profile 4gb GPU**.... i gone crazy trying to find a solution to make stable diffusion work as fast as possible. I only found a viable option: ONNX on Windows, found it and  started to try and test models while trying to optimize the in-memory model comsumption and performance/balance on the available UIs.
 
+This version might work for CUDA, TensorRT, DirectML engines of ONNX, on windows and linux ( for linux you will need to modify the requirements.txt file and delete "onnxruntime-directml" line to make it work, NOTE: Maybe AMD cards not supported in linux implementation?)
+
 I've just decided to apply some of them into this UI to allow a granular approach on how the models are loaded and how they consum memory & disk, while adding some options that other versions already had. Current version avoids the necessity of storing repeated Vae's, Text Encoders and ControlNet models... saving at least 0'5Gb per model
 
 The Stable Diffusion pipelines classes are encapsulated in new ones to allow them an easier management while adding other options around.
 
 **Current version:**
-
+**-New Hi-Res pipeline & approach**
 **-Main basic pipelines: Txt2Img, Img2Img, Pix2Pix, Inpaint, ControlNet**
 
 **-Additional tools: 2 upscalers, deepdanbooru tagging, face detection, wildcards support,styles**
