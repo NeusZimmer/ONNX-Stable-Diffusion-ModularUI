@@ -9,15 +9,16 @@ I've just decided to apply some of them into this UI to allow a granular approac
 The Stable Diffusion pipelines classes are encapsulated in new ones to allow them an easier management while adding other options around.
 
 **Current version:**
-**-New Hi-Res pipeline & approach**
+
+**-New Hi-Res pipeline & approach, plus latents experimentals ---A must try!**
 **-Main basic pipelines: Txt2Img, Img2Img, Pix2Pix, Inpaint, ControlNet**
 
 **-Additional tools: 2 upscalers, deepdanbooru tagging, face detection, wildcards support,styles**
 	
-**-Experimental feature: latents experimentals & image composition: creating one image using a sumatory of previous outputs, (one to many), working as something inbetween img2img and controlnet.**
+**-Experimental feature: latents experimentals & image composition: creating one image using a sumatory of previous outputs, (one or many), working as something inbetween outpainting, img2img and controlnet.(works so good with the hi-res pipeline**
 
-**Working features: You decide where to run&load each feature (model, vae, textenc...) based on your hardware , CUDA, DML, CPU... whitout reseting the UI. Avoid reusing of repeted models for VAE's, TextEncoder, ControlNet...**
-**And: wildards (for one or multiple iterations, also you could inclue wildcards inside other wildcards...), styles (examples available, modification now only by editing a json file.** 
+**Working features: You decide where to run&load each feature (model, vae, textenc...) based on your hardware , CUDA, DML, CPU... whithout the need of reseting the UI, only loading a new model or reloading current model. Avoid reusing of repeated models for VAE's, TextEncoder & ControlNet...**
+**And: wilcards (for one or multiple iterations, also you could inclue wildcards inside other wildcards...), styles (examples available, editing in config tab.** 
 
 ## Set up
 To make this works, 1st:  
@@ -36,7 +37,7 @@ python -m pip install --upgrade pip
 pip install torch --extra-index-url https://download.pytorch.org/whl/nightly/cpu --pre
 pip install -r requirements.txt
 ```
-
+PD: to install in linux, delete the line for installing onnxrumtime-directml, as it only exists for Windows.
 Under the previously installed directory, install the UI, only a couple of seconds download:
 
 ```
