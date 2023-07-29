@@ -6,6 +6,10 @@ from Engine.General_parameters import running_config
 def init_ui():
     ui_config=UI_Configuration()
     with gr.Blocks(title="ONNX Difussers Modular UI",css= css1) as demo:
+        if True:
+            with gr.Tab(label="Testing HiRes Txt2img Pipeline") as tab10:
+                from UI import HiRes_txt2img_ui as HiRes_txt2img_ui
+                HiRes_txt2img_ui.show_HiRes_txt2img_ui()
         if ui_config.Txt2img_Tab:
             with gr.Tab(label="Txt2img Pipelines & Inferences") as tab0:
                 from UI import txt2img_ui as txt2img_ui
