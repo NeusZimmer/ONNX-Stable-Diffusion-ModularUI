@@ -8,7 +8,8 @@ import gc
 #import numpy as np
 
 """from diffusers.utils import randn_tensor"""
-from diffusers.pipelines.stable_diffusion.pipeline_onnx_stable_diffusion_hires_txt2img import OnnxStableDiffusionHiResPipeline
+#from diffusers.pipelines.stable_diffusion.pipeline_onnx_stable_diffusion_hires_txt2img import OnnxStableDiffusionHiResPipeline
+from pipes.stable_diffusion.pipeline_onnx_stable_diffusion_hires_txt2img import OnnxStableDiffusionHiResPipeline
 
 
 
@@ -78,8 +79,6 @@ class txt2img_hires_pipe(Borg10):
         self.hires_pipe= None
         self.model = None
         gc.collect()
-
-
 
 
     def seed_generator(self,seed,iteration_count):
