@@ -76,6 +76,7 @@ def generate_click(model_drop,prompt_t0,neg_prompt_t0,sch_t0,image_t0,iter_t0,ba
     input_image = resize_and_crop(image_t0["image"], height_t0, width_t0)
 
     if (Running_information["model"] != model_drop or Running_information["tab"] != "img2img"):
+    #if (Running_information["model"] != model_drop or Running_information["tab"] != "txt2img"):        
         UI_common.clean_memory_click()
         Running_information.update({"model":model_drop})
         Running_information.update({"tab":"img2img"})
@@ -164,7 +165,7 @@ def save_image(batch_images,info,next_index):
     info_png = f"{info}"
     metadata = PngImagePlugin.PngInfo()
     metadata.add_text("parameters",info_png)
-    prompt=info["prompt"]
+    prompt=info["Img2ImgPrompt"]
     short_prompt = prompt.strip("<>:\"/\\|?*\n\t")
     short_prompt = re.sub(r'[\\/*?:"<>|\n\t]', "", short_prompt)
     short_prompt = short_prompt[:49] if len(short_prompt) > 50 else short_prompt

@@ -1,8 +1,9 @@
 import gc,os
 from Engine import pipelines_engines
+
 from Engine.General_parameters import running_config
 from Engine.General_parameters import UI_Configuration
-
+from Engine.Pipelines.txt2img_hires import txt2img_hires_pipe   
 
 def clean_memory_click():
     print("Cleaning Memory")
@@ -12,6 +13,8 @@ def clean_memory_click():
     pipelines_engines.instruct_p2p_pipe().unload_from_memory()
     pipelines_engines.img2img_pipe().unload_from_memory()
     pipelines_engines.ControlNet_pipe().unload_from_memory()
+    pipelines_engines.ControlNet_pipe().unload_from_memory()
+    txt2img_hires_pipe().unload_from_memory()
     gc.collect()
 
 def cancel_iteration():

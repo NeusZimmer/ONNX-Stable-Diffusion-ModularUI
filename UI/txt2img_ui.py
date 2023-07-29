@@ -22,6 +22,7 @@ def show_txt2img_ui():
     with gr.Row(): 
         with gr.Column(scale=13, min_width=650):
             model_drop = gr.Dropdown(model_list, value=(model_list[0] if len(model_list) > 0 else None), label="model folder", interactive=True)
+
             with gr.Accordion("Partial Reloads",open=False):
                 reload_vae_btn = gr.Button("VAE Decoder:Apply Changes & Reload")
                 reload_model_btn = gr.Button("Model:Apply new model & Fast Reload Pipe")
@@ -40,7 +41,7 @@ def show_txt2img_ui():
 
             with gr.Row():
                 iter_t0 = gr.Slider(1, 100, value=1, step=1, label="iteration count")
-                batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size")
+                batch_t0 = gr.Slider(1, 4, value=1, step=1, label="batch size", interactive=False)
             steps_t0 = gr.Slider(1, 3000, value=16, step=1, label="steps")
             guid_t0 = gr.Slider(0, 50, value=7.5, step=0.1, label="guidance")
             height_t0 = gr.Slider(64, 2048, value=512, step=64, label="height")
@@ -53,7 +54,7 @@ def show_txt2img_ui():
                 gen_btn = gr.Button("Generate", variant="primary", elem_id="gen_button")
                 clear_btn = gr.Button("Cancel",info="Cancel at end of current iteration",variant="stop", elem_id="gen_button")
                 memory_btn = gr.Button("Release memory", elem_id="mem_button")
-                #test_btn = gr.Button("Test")
+
             if ui_config.wildcards_activated:
                 from UI import styles_ui
                 styles_ui.show_styles_ui()
@@ -65,7 +66,6 @@ def show_txt2img_ui():
                         wildcard_show_btn = gr.Button("Show next prompt", elem_id="wildcard_button")
                         wildcard_gen_btn = gr.Button("Regenerate next prompt", variant="primary", elem_id="wildcard_button")
                         wildcard_apply_btn = gr.Button("Use edited prompt", elem_id="wildcard_button")
-                        test_btn = gr.Button("TESTS", elem_id="mem_button")
             with gr.Row():
                 image_out = gr.Gallery(value=None, label="output images")
 
@@ -90,11 +90,9 @@ def show_txt2img_ui():
     list_of_All_Parameters=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,guid_t0,height_t0,width_t0,eta_t0,seed_t0,fmt_t0,multiplier,strengh_t0,name_of_latent,latent_formula,offset_t0]
     gen_btn.click(fn=generate_click, inputs=list_of_All_Parameters, outputs=[image_out,status_out])
     #sch_t0.change(fn=select_scheduler, inputs=sch_t0, outputs= None)  #Atencion cambiar el DDIM ETA si este se activa
-    #memory_btn.click(fn=clean_memory_click, inputs=None, outputs=None)
     memory_btn.click(fn=UI_common.clean_memory_click, inputs=None, outputs=None)    
     
-    #test_btn.click(fn=test1,inputs=[model_drop,prompt_t0,neg_prompt_t0,sch_t0],outputs=image_out)
-    test_btn.click(fn=pruebas,inputs=[prompt_t0,neg_prompt_t0],outputs=None)
+
     latents_experimental1.change(fn=_activate_latent_save, inputs=latents_experimental1, outputs= None)
     latents_experimental2.change(fn=_activate_latent_load, inputs=[latents_experimental2,name_of_latent], outputs= None)
     latent_to_img_btn.click(fn=_latent_to_img,inputs=None,outputs=None)
@@ -103,9 +101,6 @@ def show_txt2img_ui():
         wildcard_gen_btn.click(fn=gen_next_prompt, inputs=prompt_t0, outputs=[discard,next_wildcard])
         wildcard_show_btn.click(fn=show_next_prompt, inputs=None, outputs=next_wildcard)
         wildcard_apply_btn.click(fn=apply_prompt, inputs=next_wildcard, outputs=None)
-
-
-
 
 def _latent_to_img():
     import numpy as np
@@ -148,18 +143,6 @@ def _activate_latent_load(activate_latent_load,name_of_latent):
     from Engine.General_parameters import running_config
     running_config().Running_information.update({"Load_Latents":activate_latent_load})
 
-
-def pruebas(prompt,negative_prompt):
-    from Engine import textual_inversion
-    embedding=textual_inversion.text_inversion().load_embedding("ti_path")
-    print("El tercero emb"+str(type(embedding)))
-    print("El tercero emb"+str(embedding))
-    import functools
-    from Engine import lpw_pipe
-    #self.txt2img_pipe._encode_prompt = functools.partial(lpw_pipe._encode_prompt, self.txt2img_pipe)
-    result= lpw_pipe()._encode_prompt(prompt=prompt,num_images_per_prompt=1,do_classifier_free_guidance=False,negative_prompt=negative_prompt)
-    print(type(result))
-    print(result)
 
 def change_vae(model_drop):
     from Engine.pipelines_engines import txt2img_pipe
@@ -301,7 +284,9 @@ def generate_click(
         info['Sched:']=sch_t0
         info['Multiplier:']=multiplier
         information.append(info)
-        Engine_common.save_image(batch_images,info,img_index,UI_Configuration().output_path)
+        style= running_config().Running_information["Style"]
+        Engine_common.save_image(batch_images,info,img_index,UI_Configuration().output_path,style)        
+        #Engine_common.save_image(batch_images,info,img_index,UI_Configuration().output_path)
         img_index+=1
 
     running_config().Running_information.update({"cancelled":False})
@@ -312,10 +297,3 @@ def generate_click(
     return images,information
     #return separadas,information
 
-
-
-
-
-
-    
-    
