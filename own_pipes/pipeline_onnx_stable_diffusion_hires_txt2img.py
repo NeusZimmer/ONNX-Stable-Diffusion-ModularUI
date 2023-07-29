@@ -21,12 +21,13 @@ import PIL
 import torch
 from transformers import CLIPImageProcessor, CLIPTokenizer
 
-from ...configuration_utils import FrozenDict
-from ...schedulers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler
-from ...utils import PIL_INTERPOLATION, deprecate, logging
-from ..onnx_utils import ORT_TO_NP_TYPE, OnnxRuntimeModel
-from ..pipeline_utils import DiffusionPipeline
-from . import StableDiffusionPipelineOutput
+#from ...configuration_utils import FrozenDict
+from diffusers.configuration_utils import FrozenDict
+from diffusers.schedulers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler
+from diffusers.utils import PIL_INTERPOLATION, deprecate, logging
+from diffusers.pipelines.onnx_utils import ORT_TO_NP_TYPE, OnnxRuntimeModel
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline
+#from . import StableDiffusionPipelineOutput
 
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
