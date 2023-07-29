@@ -2,14 +2,14 @@
 from Engine.General_parameters import Engine_Configuration
 from Engine.pipelines_engines import Vae_and_Text_Encoders
 from Engine.pipelines_engines import SchedulersConfig
-#from own_pipes.pipeline_onnx_stable_diffusion_hires_txt2img import OnnxStableDiffusionHiResPipeline
+from own_pipes.pipeline_onnx_stable_diffusion_hires_txt2img import OnnxStableDiffusionHiResPipeline
 
 import gc
 #import numpy as np
 
 """from diffusers.utils import randn_tensor"""
 #from diffusers.pipelines.stable_diffusion.pipeline_onnx_stable_diffusion_hires_txt2img import OnnxStableDiffusionHiResPipeline
-from pipes.pipeline_onnx_stable_diffusion_hires_txt2img import OnnxStableDiffusionHiResPipeline
+#from pipes.pipeline_onnx_stable_diffusion_hires_txt2img import OnnxStableDiffusionHiResPipeline
 
 
 
