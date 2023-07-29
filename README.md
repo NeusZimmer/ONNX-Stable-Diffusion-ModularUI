@@ -11,6 +11,7 @@ The Stable Diffusion pipelines classes are encapsulated in new ones to allow the
 **Current version:**
 
 **-New Hi-Res pipeline & approach, plus latents experimentals ---A must try!**
+
 **-Main basic pipelines: Txt2Img, Img2Img, Pix2Pix, Inpaint, ControlNet**
 
 **-Additional tools: 2 upscalers, deepdanbooru tagging, face detection, wildcards support,styles**
@@ -37,7 +38,7 @@ python -m pip install --upgrade pip
 pip install torch --extra-index-url https://download.pytorch.org/whl/nightly/cpu --pre
 pip install -r requirements.txt
 ```
-PD: to install in linux, delete the line for installing onnxrumtime-directml, as it only exists for Windows.
+PD: to install in linux, delete the line for installing onnxrumtime-directml from requirements.txt, as it only exists for Windows.
 Under the previously installed directory, install the UI, only a couple of seconds download:
 
 ```
