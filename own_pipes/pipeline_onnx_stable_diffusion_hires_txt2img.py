@@ -397,6 +397,15 @@ class OnnxStableDiffusionHiResPipeline(DiffusionPipeline):
         #process_latent : if low-res is equal to high-res, avoid VAE postprocress for txt2img call and preprocess in img2img call
         process_latent=True if ((hires_height==height) and (hires_width==width)) else False
 
+        latent=latents
+        #if latent!=None:
+        if type(latent) is np.ndarray:
+            skip_to_img2img=True
+            process_latent=True
+        else:
+            skip_to_img2img=False
+        print(f"Skip to img2img")
+
         if not process_latent:
             print("Warm up")
             self.txt2img_call(
@@ -416,26 +425,26 @@ class OnnxStableDiffusionHiResPipeline(DiffusionPipeline):
                 callback,
                 callback_steps,
             )
-
-        print("Low-Res Generation")
-        #image_result,latent=self.txt2img_call(
-        latent=self.txt2img_call(
-            height,
-            width,
-            num_inference_steps,
-            guidance_scale,
-            num_images_per_prompt,
-            eta,
-            generator,
-            prompt_embeds,
-            output_type,
-            return_dict,
-            batch_size,
-            do_classifier_free_guidance,
-            process_latent,
-            callback,
-            callback_steps,
-        )
+        if not skip_to_img2img:
+            print("Low-Res Generation")
+            #image_result,latent=self.txt2img_call(
+            latent=self.txt2img_call(
+                height,
+                width,
+                num_inference_steps,
+                guidance_scale,
+                num_images_per_prompt,
+                eta,
+                generator,
+                prompt_embeds,
+                output_type,
+                return_dict,
+                batch_size,
+                do_classifier_free_guidance,
+                process_latent,
+                callback,
+                callback_steps,
+            )
 
         if not process_latent:
             image_result=self.output_to_numpy(latent)
