@@ -381,10 +381,12 @@ class OnnxStableDiffusionControlNetPipeline(DiffusionPipeline):
 
                 timestep = np.array([t], dtype=timestep_dtype)
 
+
                 blocksamples = self.controlnet(
                     sample=latent_model_input,
                     timestep=timestep,
                     encoder_hidden_states=prompt_embeds,
+                    return_dict=True,   #eliminar comentario para prueba de tile
                     controlnet_cond=image,
                 )
 

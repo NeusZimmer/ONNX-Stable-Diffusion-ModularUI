@@ -36,21 +36,47 @@ def get_next_save_index(output_path):
     return next_index
 
 
-def save_image(batch_images,info,next_index,output_path):
+def save_image(batch_images,info,next_index,output_path,style=None,save_textfile=False):
     #output_path=UI_Configuration().output_path
     info_png = f"{info}"
     metadata = PngImagePlugin.PngInfo()
     metadata.add_text("parameters",info_png)
     prompt=info["prompt"]
-    short_prompt = prompt.strip("<>:\"/\\|?*\n\t")
-    short_prompt = re.sub(r'[\\/*?:"<>|\n\t]', "", short_prompt)
-    short_prompt = short_prompt[:49] if len(short_prompt) > 50 else short_prompt
 
+    style_pre =""
+    style_post=""
+    style_pre_len=0
+    style_post_len=0
+
+    if style:
+        styles=style.split("|")
+        style_pre =styles[0]
+        style_pre_len=len(style_pre)
+        style_post=styles[1]
+        style_post_len=len(style_post)
+        prompt=prompt[style_pre_len-1:-style_post_len]
+        """print(f"prompt:{prompt}")
+    else:
+        print("No tocado el prompt")"""
+
+    short_prompt1 = prompt.strip("(){}<>:\"/\\|?*\n\t")
+    short_prompt1 = re.sub(r'[\\/*?:"<>()|\n\t]', "", short_prompt1)
+    short_prompt = short_prompt1[:49] if len(short_prompt1) > 50 else short_prompt1
     os.makedirs(output_path, exist_ok=True)
 
-    for image in batch_images:
-        image.save(os.path.join(output_path,f"{next_index:06}-00.{short_prompt}.png",),optimize=True,pnginfo=metadata,)
-
+    i=0
+    process_tags=True
+    if not process_tags:
+        for image in batch_images:
+            image.save(os.path.join(output_path,f"{next_index:06}-0{i}_{short_prompt}.png",),optimize=True,pnginfo=metadata,)
+            i+=1
+    else:
+        for image in batch_images:
+            image.save(os.path.join(output_path,f"{next_index:06}-0{i}.png",),optimize=True,pnginfo=metadata,)
+            if save_textfile and (i==0):
+                with open(os.path.join(output_path,f"{next_index:06}-0{i}.txt"), 'w',encoding='utf8') as txtfile:
+                    txtfile.write(f"{short_prompt1} \nstyle_pre:{style_pre}\nstyle_post:{style_post}")
+            i+=1
 
 def PIL_resize_and_crop(input_image: PIL.Image.Image, height: int, width: int):
     input_width, input_height = input_image.size

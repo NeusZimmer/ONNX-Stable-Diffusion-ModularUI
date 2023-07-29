@@ -387,6 +387,7 @@ def _encode_prompt(
         max_embeddings_multiples (`int`, *optional*, defaults to `3`):
             The max multiple length of prompt embeddings compared to the max output length of text encoder.
     """
+
     batch_size = len(prompt) if isinstance(prompt, list) else 1
     if negative_prompt is None:
         negative_prompt = [""] * batch_size

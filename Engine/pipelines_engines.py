@@ -100,7 +100,7 @@ class SchedulersConfig(Borg):
         self._model_path = model_path
         self._scheduler_name = scheduler_name
         provider = Engine_Configuration().Scheduler_provider
-        match scheduler_name:
+        """match scheduler_name:
             case "PNDM":
                 scheduler = PNDMScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
             case "LMS":
@@ -141,7 +141,49 @@ class SchedulersConfig(Borg):
             case "DPMS++_Heun":
                 scheduler = DPMSolverMultistepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver++", solver_type="heun") 
             case "SDE-1":
-                scheduler = ScoreSdeVeScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver++", solver_type="heun") 
+                scheduler = ScoreSdeVeScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver++", solver_type="heun") """
+        #match scheduler_name:
+        if scheduler_name=="PNDM":
+            scheduler = PNDMScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "LMS":
+            scheduler = LMSDiscreteScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "DDIM" :
+            scheduler = DDIMScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "Euler" :
+            scheduler = EulerDiscreteScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "EulerA" :
+            scheduler = EulerAncestralDiscreteScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "DPMS_ms" :
+            scheduler = DPMSolverMultistepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "DPMS_ss" :
+            scheduler = DPMSolverSinglestepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)   
+        elif scheduler_name== "DEIS" :
+            scheduler = DEISMultistepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "HEUN" :
+            scheduler = HeunDiscreteScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "KDPM2":
+            scheduler = KDPM2DiscreteScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)
+        elif scheduler_name== "UniPC":
+            scheduler = UniPCMultistepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
+#Test schedulers, maybe not working
+        elif scheduler_name== "VQD":
+            scheduler = VQDiffusionScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
+        elif scheduler_name== "UnCLIP":
+            scheduler = UnCLIPScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
+        elif scheduler_name== "Karras":
+            scheduler = KarrasVeScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
+        elif scheduler_name== "KDPM2-A":
+            scheduler = KDPM2AncestralDiscreteScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
+        elif scheduler_name== "IPNDMS":
+            scheduler = IPNDMScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
+        elif scheduler_name== "DDIM-Inverse":
+            scheduler = DDIMInverseScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider)  
+        elif scheduler_name== "DPMS_Heun":
+            scheduler = DPMSolverMultistepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver", solver_type="heun") 
+        elif scheduler_name== "DPMS++_Heun":
+            scheduler = DPMSolverMultistepScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver++", solver_type="heun") 
+        elif scheduler_name== "SDE-1":
+            scheduler = ScoreSdeVeScheduler.from_pretrained(model_path, subfolder="scheduler",provider=provider,algorithm_type="dpmsolver++", solver_type="heun")         
            
             
         self.selected_scheduler =scheduler
@@ -217,9 +259,9 @@ class Vae_and_Text_Encoders(Borg1):
         sess_options = ort.SessionOptions()
         sess_options.log_severity_level=3
         print(f"Loading VAE encoder in:{provider}, from {vae_path}" )
-        #self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider='DmlExecutionProvider',sess_options=sess_options)
-        self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider='provider',sess_options=sess_options)
-        #print("Acordarse de cambiar donde carga el vae_encoder")
+        self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider='CPUExecutionProvider',sess_options=sess_options)
+        #self.vae_encoder = OnnxRuntimeModel.from_pretrained(vae_path, provider=provider,sess_options=sess_options)
+        print("Acordarse de cambiar donde carga el vae_encoder, linea 264")
 
         return self.vae_encoder
 
@@ -412,6 +454,7 @@ class txt2img_pipe(Borg3):
             provider =Engine_Configuration().MAINPipe_provider
 
         if self.txt2img_pipe == None:
+            print("Pasando por aqui")
             import onnxruntime as ort
             #from optimum.onnxruntime import ORTStableDiffusionPipeline as ort
             sess_options = ort.SessionOptions()

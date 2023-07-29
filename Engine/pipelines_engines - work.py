@@ -336,6 +336,7 @@ class txt2img_pipe(Borg3):
     running = False
     seeds = []
     latents_list = []
+    multiplier1= None
 
     def __init__(self):
         Borg3.__init__(self)
@@ -521,11 +522,16 @@ class txt2img_pipe(Borg3):
                 #result="F"+name
                 print(f"Loading latent(idx:name):{index}:{name}")
                 result=np.load(f"./latents/{name}")
+                if False:
+                #if self.multiplier1 < 1:
+                    print("Multiplier applied (Use 1 as value, to do not apply)")
+                    loaded_latent= self.multiplier1 * result
             else:
                 #result=name
                 noise_size=name.split("noise-")[1].split("x")
                 #print("noise_size"+str(noise_size))
-                noise = (0.6)*(generator.random((1,4,int(int(noise_size[1])/8),int(int(noise_size[0])/8))).astype(np.float32))
+                noise = (0.4)*(generator.random((1,4,int(int(noise_size[1])/8),int(int(noise_size[0])/8))).astype(np.float32))
+                #noise = (generator.random((1,4,int(int(noise_size[1])/8),int(int(noise_size[0])/8))).astype(np.float32))
                 result = noise
 
         return result
@@ -554,7 +560,8 @@ class txt2img_pipe(Borg3):
         latent_list=self.get_ordered_latents()
         formula=running_config().Running_information["Latent_Formula"]
         formula=formula.replace(' ', '')
-        formula=formula.lower() 
+        formula=formula.lower()
+        self.multiplier1=multiplier 
         #formulafinal,loaded_latent=self.sum_latents(latent_list,formula,generator,[])
         #print("Formula final"+formulafinal)
         loaded_latent=self.sum_latents(latent_list,formula,generator,[])
@@ -562,18 +569,17 @@ class txt2img_pipe(Borg3):
         print("Resultant Latent Shape "+"H:"+str(loaded_latent.shape[2]*8)+"x W:"+str(loaded_latent.shape[3]*8))
 
         self.txt2img_pipe.scheduler = SchedulersConfig().reset_scheduler()
-
         if multiplier < 1:
-            #print("Multiplier applied (Use 1 as value, to do not apply)")
+            print("Multiplier applied (Use 1 as value, to do not apply)")
             loaded_latent= multiplier * loaded_latent
 
-        #noise = (0.3825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype) #works a lot better for EulerA&DDIM than other schedulers  , why?
+        noise = (0.3825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype) #works a lot better for EulerA&DDIM than other schedulers  , why?
         #noise = (0.1825 * generator.random(loaded_latent.shape) + 0.3).astype(loaded_latent.dtype) #works a lot better for EulerA&DDIM than other schedulers  , why?
-        noise = (generator.random(loaded_latent.shape)).astype(loaded_latent.dtype)
+        #noise = (generator.random(loaded_latent.shape)).astype(loaded_latent.dtype)
 
         offset = self.txt2img_pipe.scheduler.config.get("steps_offset", 0)
         #init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar
-        init_timestep = int(steps * strengh) + offset #Con 0.ocho funciona, con 9 un poco peor?, probar, aqui tenia puesto offset a 0
+        init_timestep = int(steps * strengh) + 10 #Con 0.ocho funciona, con 9 un poco peor?, probar, aqui tenia puesto offset a 0
         init_timestep = min(init_timestep, steps)
 
         timesteps = self.txt2img_pipe.scheduler.timesteps.numpy()[-init_timestep]
