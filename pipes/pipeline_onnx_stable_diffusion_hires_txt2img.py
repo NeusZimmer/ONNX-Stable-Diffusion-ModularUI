@@ -514,7 +514,7 @@ class OnnxStableDiffusionHiResPipeline(DiffusionPipeline):
         else:
             provider =Engine_Configuration().MAINPipe_provider
 
-        modelpath="C:\\AMD_ML\\models\\lvl4-uber-cardos-fp16"
+        modelpath="Put here a model, currently have no sense... included for further tests"
         self.unet = None
         unet_path = modelpath +"/unet"
         self.unet = OnnxRuntimeModel.from_pretrained(unet_path,provider=provider)
