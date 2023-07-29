@@ -25,11 +25,21 @@ def show_HiRes_txt2img_ui():
             model_drop = gr.Dropdown(model_list, value=(model_list[0] if len(model_list) > 0 else None), label="model folder", interactive=True)
             with gr.Accordion("Partial Reloads",open=False):
                 reload_vae_btn = gr.Button("VAE Decoder:Apply Changes & Reload")
-                reload_model_btn = gr.Button("Model:Apply new model & Fast Reload Pipe")
+                #reload_model_btn = gr.Button("Model:Apply new model & Fast Reload Pipe")
 
             sch_t0 = gr.Radio(sched_list, value=sched_list[0], label="scheduler")
             prompt_t0 = gr.Textbox(value="", lines=2, label="prompt")
             neg_prompt_t0 = gr.Textbox(value="", lines=2, label="negative prompt")
+
+            with gr.Accordion(label="Latents experimentals",open=False):
+                #multiplier = gr.Slider(0, 1, value=0.18215, step=0.05, label="Multiplier, blurry the ingested latent, 1 to do not modify", interactive=True)
+                #strengh_t0 = gr.Slider(0, 1, value=0.8, step=0.05, label="Strengh, or % of steps to apply the latent", interactive=True)
+                #offset_t0 = gr.Slider(0, 100, value=1, step=1, label="Offset Steps for the scheduler", interactive=True)
+                #latents_experimental1 = gr.Checkbox(label="Save generated latents ", value=False, interactive=True)
+                latents_experimental2 = gr.Checkbox(label="Load latent from a generation", value=False, interactive=True)
+                name_of_latent = gr.Textbox(value="", lines=1, label="Names of Numpy File Latents (1:x.npy,2:y.pt,3:noise-(width)xheight())")
+                latent_formula = gr.Textbox(value="", lines=1, label="Formula for the sumatory of latents")
+
 
             with gr.Row():
                 gr.Markdown("Common parameters")
@@ -98,7 +108,7 @@ def show_HiRes_txt2img_ui():
     reload_vae_btn.click(fn=change_vae,inputs=model_drop,outputs=None)
     #reload_model_btn.click(fn=change_model,inputs=model_drop,outputs=None)
 
-    list_of_All_Parameters2=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,steps_t1,guid_t0,height_t0,width_t0,height_t1,width_t1,eta_t0,seed_t0,fmt_t0,hires_passes_t1,save_textfile, save_low_res]    
+    list_of_All_Parameters2=[model_drop,prompt_t0,neg_prompt_t0,sch_t0,iter_t0,batch_t0,steps_t0,steps_t1,guid_t0,height_t0,width_t0,height_t1,width_t1,eta_t0,seed_t0,fmt_t0,hires_passes_t1,save_textfile, save_low_res,latent_formula,name_of_latent,latents_experimental2]    
 
     memory_btn.click(fn=UI_common.clean_memory_click, inputs=None, outputs=None)    
     
@@ -188,7 +198,17 @@ def generate_click(
     model_drop,prompt_t0,neg_prompt_t0,sch_t0,
     iter_t0,batch_t0,steps_t0,steps_t1,guid_t0,height_t0,
     width_t0,height_t1,width_t1,eta_t0,seed_t0,fmt_t0,
-    hires_passes_t1,save_textfile, save_low_res):
+    hires_passes_t1,save_textfile, save_low_res,
+    latent_formula,name_of_latent,latents_experimental2):
+
+    from Engine.General_parameters import running_config
+
+    if latents_experimental2:
+        running_config().Running_information.update({"Load_Latents":True})
+        running_config().Running_information.update({"Latent_Name":name_of_latent})
+        running_config().Running_information.update({"Latent_Formula":latent_formula})
+    else:
+        running_config().Running_information.update({"Load_Latents":False})
 
     from Engine.Pipelines.txt2img_hires import txt2img_hires_pipe
 
