@@ -343,7 +343,7 @@ class inpaint_pipe(Borg2):
                 print(f"Loading Inpaint unet pipe in {provider}")
                 self.inpaint_pipe = OnnxStableDiffusionInpaintPipeline.from_pretrained(
                     model_path,
-                    provider=en_config().MAINPipe_provider,
+                    provider= provider,
                     scheduler=SchedulersConfig().scheduler(sched_name,model_path),
                     text_encoder=Vae_and_Text_Encoders().text_encoder,
                     vae_decoder=Vae_and_Text_Encoders().vae_decoder,
