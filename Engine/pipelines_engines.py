@@ -974,7 +974,8 @@ class ControlNet_pipe(Borg6):
                 text_encoder=Vae_and_Text_Encoders().text_encoder,
                 scheduler=sched_pipe,
                 sess_options=opts, 
-                provider = Engine_Configuration().MAINPipe_provider,
+                #provider = Engine_Configuration().MAINPipe_provider,
+                provider = provider,                
                 requires_safety_checker= False
             )
         else:
