@@ -22,6 +22,7 @@ The Stable Diffusion pipelines classes are encapsulated in new ones to allow the
 **And: wilcards (for one or multiple iterations, also you could inclue wildcards inside other wildcards...), styles (examples available, editing in config tab.** 
 
 ## Set up
+
 To make this works follow the (shown below) install steps for ONNX Stabble diffusion.
 
 ```
