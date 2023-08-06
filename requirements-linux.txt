@@ -1,0 +1,13 @@
+protobuf < 4.0
+numpy
+transformers
+diffusers
+ftfy
+spacy
+scipy
+safetensors
+gradio
+omegaconf
+onnx
+onnxconverter-common
+opencv-python
