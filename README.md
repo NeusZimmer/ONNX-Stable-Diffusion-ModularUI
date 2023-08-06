@@ -41,7 +41,7 @@ pip install torch --extra-index-url https://download.pytorch.org/whl/nightly/cpu
 pip install -r requirements.txt
 ```
 
-PD: to install in linux, use **pip install -r requirements-linux.txt** instead "pip install -r requirements.txt", as that package only exists for Windows.
+PD: to install in linux, use **pip install -r requirements-linux.txt** instead "pip install -r requirements.txt".
 
 Activate python virtual environment and run the UI
 ```
