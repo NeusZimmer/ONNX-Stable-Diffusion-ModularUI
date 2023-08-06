@@ -21,6 +21,8 @@ The Stable Diffusion pipelines classes are encapsulated in new ones to allow the
 **Working features: You decide where to run&load each feature (model, vae, textenc...) based on your hardware , CUDA, DML, CPU... whithout the need of reseting the UI, only loading a new model or reloading current model. Avoid reusing of repeated models for VAE's, TextEncoder & ControlNet...**
 **And: wilcards (for one or multiple iterations, also you could inclue wildcards inside other wildcards...), styles (examples available, editing in config tab.** 
 
+Next version update: clip-skip
+
 ## Set up
 
 To make this works follow the (shown below) install steps for ONNX Stabble diffusion.
