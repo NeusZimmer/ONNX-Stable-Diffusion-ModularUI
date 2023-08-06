@@ -22,14 +22,13 @@ The Stable Diffusion pipelines classes are encapsulated in new ones to allow the
 **And: wilcards (for one or multiple iterations, also you could inclue wildcards inside other wildcards...), styles (examples available, editing in config tab.** 
 
 ## Set up
-To make this works, 1st:  
-Follow the (shown below) install steps for ONNX Stabble diffusion (obtained from) :**https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16/** and use it as your virtual environment for the UI.
+To make this works follow the (shown below) install steps for ONNX Stabble diffusion.
 
 ```
-git clone https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16
-cd Stable-Diffusion-ONNX-FP16
+git clone https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI.git
 ```
-Then do the following:
+
+Then :
 ```
 pip install virtualenv
 python -m venv sd_env
@@ -38,13 +37,10 @@ python -m pip install --upgrade pip
 pip install torch --extra-index-url https://download.pytorch.org/whl/nightly/cpu --pre
 pip install -r requirements.txt
 ```
-PD: to install in linux, delete the line for installing onnxrumtime-directml from requirements.txt, as it only exists for Windows.
-Under the previously installed directory, install the UI, only a couple of seconds download:
 
-```
-git clone https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI.git
-```
-Activate its virtual environment and run this UI
+PD: to install in linux, use **pip install -r requirements-linux.txt** instead "pip install -r requirements.txt", as that package only exists for Windows.
+
+Activate python virtual environment and run the UI
 ```
 ./sd_env/scripts/activate.bat
 cd ONNX-Stable-Diffusion-ModularUI
