@@ -52,6 +52,9 @@ or
 py -O ONNX-StableDiffusion.py
 ```
 
+**Model Download**
+I've uploaded an initial set of files for testing the UI into https://civitai.com/models/125580
+
 **For Model conversion, please, use this repository:**
 https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16
 
