@@ -52,6 +52,12 @@ or
 py -O ONNX-StableDiffusion.py
 ```
 
+**For Model conversion, please, use this repository:**
+https://github.com/Amblyopius/Stable-Diffusion-ONNX-FP16
+
+PD: do not need to create a new python environment, as this UI uses the same environment and there's no need to duplicate.
+
+
 ## Configuration
 At first run, you may need to configure the path for some options: output & models, 
 ![UIOptions](https://github.com/NeusZimmer/ONNX-Stable-Diffusion-ModularUI/assets/94193584/a160aacd-39ca-4ab4-b75b-3e7f4d0ff82c)
