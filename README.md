@@ -1,4 +1,10 @@
+# Deprecated, for new version go to: https://github.com/NeusZimmer/ONNX-ModularUI-StableDiffusion
+
 # ONNX-ModularUI
+**New version available**
+**This version only works until diffusers version 14.0, does not work with new versions of diffusers, may need to modify the requirements.txt to make it run**
+
+
 
 Hello, I'm a **AMD user with a low-profile 4gb GPU**.... i gone crazy trying to find a solution to make stable diffusion work as fast as possible. I only found a viable option: ONNX on Windows, found it and  started to try and test models while trying to optimize the in-memory model comsumption and performance/balance on the available UIs.
 
